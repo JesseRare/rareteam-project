@@ -136,8 +136,13 @@ await rm(path.join(next, ".native-extract"), { recursive: true, force: true });
 
 const classpath = [...selected.entries()]
   .filter(([, artifact]) => !artifact.name.includes(":natives-"))
+  // The split "extra" jar contains the original obfuscated client classes.
+  // Putting it on the Java classpath alongside the SRG/patched client creates
+  // a second automatic module named "client" with duplicate Minecraft
+  // packages and makes ModuleLayer resolution fail before the game starts.
+  .filter(([relative]) => !/-extra\.jar$/i.test(relative))
   .map(([relative]) => `libraries/${relative.replaceAll("\\", "/")}`);
-for (const required of installerOutputs.slice(0, 2)) {
+for (const required of installerOutputs.slice(1)) {
   if (!classpath.includes(required)) classpath.push(required);
 }
 

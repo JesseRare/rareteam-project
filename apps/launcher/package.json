@@ -1,6 +1,7 @@
 {
   "name": "@rare/launcher",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "productName": "Мельхиор-1",
   "description": "Официальный лаунчер Minecraft-проекта Мельхиор-1",
   "author": "Rare Network",
   "private": true,

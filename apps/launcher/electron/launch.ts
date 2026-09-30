@@ -34,7 +34,7 @@ function expand(value: string, identity: LaunchIdentity, installRoot: string, ve
     .replaceAll("${version_name}", versionName)
     .replaceAll("${assets_index_name}", "17")
     .replaceAll("${launcher_name}", "RareLauncher")
-    .replaceAll("${launcher_version}", "0.1.1")
+    .replaceAll("${launcher_version}", "0.1.2")
     .replaceAll("${user_type}", "mojang")
     .replaceAll("${version_type}", "RareTeam")
     .replaceAll("${clientid}", "")
@@ -48,7 +48,8 @@ export async function launchMinecraft(installRoot: string, publicKeyPem: string,
   const manifest = verifyManifest(JSON.parse(await readFile(path.join(installRoot, ".rare-manifest.json"), "utf8")), publicKeyPem) as BuildManifest;
   const launch = manifest.launch;
   if (!launch) throw new Error("This build has no launch configuration");
-  if (!launch.mainClass || launch.classpath.some((entry) => !safeRelative(entry) || entry.startsWith("-") || entry.startsWith("--") || !entry.toLowerCase().endsWith(".jar"))) {
+  const classpath = launch.classpath.filter((entry) => !/-extra\.jar$/i.test(entry));
+  if (!launch.mainClass || classpath.some((entry) => !safeRelative(entry) || entry.startsWith("-") || entry.startsWith("--") || !entry.toLowerCase().endsWith(".jar"))) {
     throw new Error("Invalid launch configuration: classpath must contain only relative .jar files");
   }
   let java: string;
@@ -58,7 +59,7 @@ export async function launchMinecraft(installRoot: string, publicKeyPem: string,
   } else {
     java = await resolveJava21(installRoot);
   }
-  const resolvedClasspathEntries = launch.classpath.map((entry) => path.resolve(installRoot, entry));
+  const resolvedClasspathEntries = classpath.map((entry) => path.resolve(installRoot, entry));
   const resolvedClasspath = resolvedClasspathEntries.join(path.delimiter);
   const versionName = manifest.minecraftVersion;
   const expandedJvmArgs = launch.jvmArgs
