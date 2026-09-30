@@ -1,0 +1,52 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": { "version": "PTDL_v2", "update_url": null },
+    "exported_at": "2026-06-06T00:00:00+07:00",
+    "name": "PostgreSQL",
+    "author": "aetherix@lunexia.com",
+    "description": "PostgreSQL database server egg.\r\n\r\nPostgreSQL 18 is the latest release (May 2026). PostgreSQL 17 remains supported.\r\n\r\nDefault port: 5432.\r\nData is stored in /home/container/data.",
+    "features": null,
+    "docker_images": {
+        "PostgreSQL 18 (Latest)": "ghcr.io/parkervcp/yolks:postgres_18",
+        "PostgreSQL 17": "ghcr.io/parkervcp/yolks:postgres_17",
+        "PostgreSQL 16": "ghcr.io/parkervcp/yolks:postgres_16",
+        "PostgreSQL 15": "ghcr.io/parkervcp/yolks:postgres_15"
+    },
+    "file_denylist": [],
+    "startup": "postgres -D /home/container/data -p {{SERVER_PORT}}",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"database system is ready to accept connections\"\r\n}",
+        "logs": "{}",
+        "stop": "pg_ctl stop -D /home/container/data -m fast"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\r\n# PostgreSQL Installation Script\r\n# by Aetherix-ops\r\n#\r\napt update && apt install -y postgresql postgresql-contrib\r\n\r\nmkdir -p /mnt/server/data\r\nchown postgres:postgres /mnt/server/data\r\n\r\nsu postgres -c \"initdb -D /mnt/server/data\"\r\n\r\necho \"host all all 0.0.0.0/0 md5\" >> /mnt/server/data/pg_hba.conf\r\necho \"listen_addresses = '*'\" >> /mnt/server/data/postgresql.conf\r\necho \"port = 5432\" >> /mnt/server/data/postgresql.conf\r\n\r\necho \"install complete\"",
+            "container": "ghcr.io/parkervcp/yolks:postgres_18",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Postgres Password",
+            "description": "Password for the postgres superuser.",
+            "env_variable": "POSTGRES_PASSWORD",
+            "default_value": "changeme",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Default Database",
+            "description": "Name of the default database to create.",
+            "env_variable": "POSTGRES_DB",
+            "default_value": "mydb",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        }
+    ]
+}

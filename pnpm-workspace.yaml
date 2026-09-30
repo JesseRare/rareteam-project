@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+managePackageManagerVersions: false
+confirmModulesPurge: false
+onlyBuiltDependencies:
+  - argon2
+  - electron
+  - esbuild
+allowBuilds:
+  argon2: true
+  electron: true
+  electron-winstaller: false
+  esbuild: true

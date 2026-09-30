@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      PUBLIC_URL: ${PUBLIC_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      GAME_SERVER_KEY: ${GAME_SERVER_KEY}
+      ARTIFACT_ROOT: /data/artifacts
+      MANIFEST_PRIVATE_KEY: ${MANIFEST_PRIVATE_KEY}
+      MANIFEST_PUBLIC_KEY: ${MANIFEST_PUBLIC_KEY}
+      PACK_SOURCE: /data/pack
+      PACK_POLL_SECONDS: 30
+      MINECRAFT_ADDRESS: ${MINECRAFT_ADDRESS}
+    volumes:
+      - artifacts:/data/artifacts
+      - ${PACK_SOURCE_HOST}:/data/pack:ro
+volumes:
+  artifacts:

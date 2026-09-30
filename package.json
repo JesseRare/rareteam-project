@@ -1,0 +1,13 @@
+{
+  "name": "rare-launcher-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @rare/launcher dev",
+    "dev:api": "pnpm --filter @rare/backend dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+    ,"build:client-pack": "node scripts/build-client-pack.mjs"
+  }
+}

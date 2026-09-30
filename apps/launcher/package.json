@@ -1,0 +1,43 @@
+{
+  "name": "@rare/launcher",
+  "version": "0.1.0",
+  "description": "Официальный лаунчер Minecraft-проекта Мельхиор-1",
+  "author": "Rare Network",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "tsc -b && vite build && electron-builder",
+    "test": "vitest run electron/sync.test.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rare/contracts": "workspace:*",
+    "@tanstack/react-query": "^5.90.2",
+    "electron-store": "^11.0.2",
+    "lucide-react": "^0.544.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4",
+    "wait-on": "^8.0.4"
+  },
+  "build": {
+    "appId": "ru.rareteam.launcher",
+    "productName": "Мельхиор-1",
+    "files": ["dist/**", "dist-electron/**"],
+    "win": { "target": "portable", "icon": "src/assets/logo.ico", "artifactName": "Melchior-1-${version}-Windows-${arch}.${ext}" },
+    "mac": { "target": "zip", "artifactName": "Melchior-1-${version}-macOS-${arch}.${ext}", "category": "public.app-category.games" }
+  }
+}

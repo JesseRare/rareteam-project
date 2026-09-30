@@ -1,0 +1,15 @@
+node_modules/
+dist/
+release/
+.env
+*.log
+data/
+coverage/
+*.db
+*.db-shm
+*.db-wal
+deploy/.postgres-password
+dist-electron/
+*.tsbuildinfo
+ui-preview.png
+css-fixed.png
