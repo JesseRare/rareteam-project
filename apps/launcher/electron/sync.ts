@@ -108,15 +108,21 @@ async function downloadFileOnce(file: BuildFile, manifestUrl: string, target: st
   await mkdir(path.dirname(target), { recursive: true });
   const temporary = `${target}.part`;
   let offset = 0;
-  try { offset = (await stat(temporary)).size; } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+  let temporaryExists = false;
+  try {
+    offset = (await stat(temporary)).size;
+    temporaryExists = true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
   if (offset > file.size) { await rm(temporary, { force: true }); offset = 0; }
-  if (offset === file.size && (await sha256(temporary)) === file.sha256) {
+  if (temporaryExists && offset === file.size && (await sha256(temporary)) === file.sha256) {
     await rm(target, { force: true });
     await rename(temporary, target);
     onBytes(offset);
     return;
   }
-  if (offset === file.size) {
+  if (temporaryExists && offset === file.size) {
     await rm(temporary, { force: true });
     offset = 0;
   }
