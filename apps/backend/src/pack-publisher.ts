@@ -5,6 +5,7 @@ import path from "node:path";
 import type { BuildFile, BuildManifest } from "@rare/contracts";
 import { config } from "./config.js";
 import { db } from "./db.js";
+import { syncPterodactylMods } from "./mod-sync.js";
 let lastSnapshot = "";
 
 async function sha256(file: string) {
@@ -115,6 +116,10 @@ export function startPackPublisher(log: { info(value: unknown, message?: string)
     if (running) return;
     running = true;
     try {
+      const modSync = await syncPterodactylMods();
+      if (modSync.enabled && (modSync.downloaded || modSync.removed)) {
+        log.info(modSync, "Minecraft mods synchronized");
+      }
       const manifest = await publishPack();
       if (manifest) log.info({ version: manifest.version, files: manifest.files.length }, "Pack published");
     } catch (error) { log.error(error, "Pack publishing failed"); }

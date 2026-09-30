@@ -41,3 +41,29 @@ if [ ! -f .melchior-v2 ]; then tar -xzf rare-launcher-backend.tar.gz && npm inst
 Для PostgreSQL-контейнера сейчас нужен startup с `nss_wrapper`, потому что Wings запускает его с UID 999 без записи в `/etc/passwd`. PostgreSQL также запускается с `-k /tmp`; доступ backend разрешён правилом `pg_hba.conf` для `172.18.0.0/16`.
 
 На игровом сервере задаются `RARE_AUTH_URL`, `RARE_SERVER_ID=melchior-1` и `RARE_GAME_SERVER_KEY`. Последний равен `GAME_SERVER_KEY` из `deploy/.env`.
+
+## Автоматическая синхронизация модов
+
+Backend может читать клиентские `.jar` непосредственно из папки `/mods`
+Minecraft-сервера через Pterodactyl Client API. Это надёжнее межконтейнерного
+mount на установках Wings, где изменение mount не применяется к уже созданному
+контейнеру.
+
+Переменные backend:
+
+```dotenv
+PTERODACTYL_URL=https://pt.example.com
+PTERODACTYL_API_KEY=<client-api-key>
+PTERODACTYL_SERVER_ID=server-identifier
+PTERODACTYL_MODS_DIRECTORY=/mods
+```
+
+На каждом цикле `PACK_POLL_SECONDS` backend:
+
+1. получает список `.jar` в серверной папке;
+2. скачивает новые и изменённые файлы в `PACK_SOURCE/mods`;
+3. удаляет только ранее синхронизированные `.jar`, исчезнувшие на сервере;
+4. публикует новую подписанную версию манифеста.
+
+Ключ следует создавать отдельно для этой задачи и хранить только в `.env`
+backend. Он никогда не должен попадать в Git.

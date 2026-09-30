@@ -30,4 +30,8 @@ Backend опрашивает каталог `PACK_SOURCE` раз в 30 секу�
 3. атомарно публикует новый манифест, подписанный Ed25519;
 4. обновляет версию профиля в PostgreSQL.
 
+При заданных `PTERODACTYL_URL`, `PTERODACTYL_API_KEY` и
+`PTERODACTYL_SERVER_ID` backend перед публикацией также синхронизирует `.jar`
+из `/mods` Minecraft-сервера в `PACK_SOURCE/mods`.
+
 В Pterodactyl каталог `client-pack` игрового сервера монтируется в контейнер backend только для чтения. Файлы, которые нужны только серверу, не следует класть в `client-pack`.
