@@ -37,8 +37,10 @@
   "build": {
     "appId": "ru.rareteam.launcher",
     "productName": "Мельхиор-1",
+    "executableName": "Melchior-1",
     "files": ["dist/**", "dist-electron/**"],
     "win": { "target": "portable", "icon": "src/assets/logo.ico", "artifactName": "Melchior-1-${version}-Windows-${arch}.${ext}" },
-    "mac": { "target": "zip", "artifactName": "Melchior-1-${version}-macOS-${arch}.${ext}", "category": "public.app-category.games" }
+    "mac": { "target": "zip", "artifactName": "Melchior-1-${version}-macOS-${arch}.${ext}", "category": "public.app-category.games" },
+    "linux": { "icon": "src/assets/logo.png", "artifactName": "Melchior-1-${version}-Linux-${arch}.${ext}" }
   }
 }

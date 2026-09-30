@@ -31,10 +31,10 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build
 Текущий startup backend в Pterodactyl:
 
 ```bash
-if [ ! -f .melchior-v2 ]; then tar -xzf rare-launcher-backend.tar.gz && npm install --omit=dev && touch .melchior-v2; fi; PORT=18080 node --env-file=.env dist/server.js
+if [ ! -f .melchior-v3 ]; then tar -xzf "Мельхиор-1-backend-update.tar.gz" && npm install --omit=dev && touch .melchior-v3 || exit 1; fi; exec env PORT="${SERVER_PORT}" node --env-file=.env dist/server.js
 ```
 
-`PORT=18080` в startup намеренно имеет приоритет над `PORT=8080` из `.env`: это основная allocation backend-сервера. Архив обновления не должен содержать `.env`, иначе он перезапишет рабочие пароли и ключи. Перед установкой новой версии через этот startup нужно удалить `.melchior-v2`, загрузить новый архив и перезапустить сервер.
+`SERVER_PORT` задаётся Pterodactyl из основной allocation backend-сервера и имеет приоритет над `PORT` из `.env`. Архив обновления не должен содержать `.env`, иначе он перезапишет рабочие пароли и ключи. Перед установкой новой версии через этот startup нужно удалить `.melchior-v3`, загрузить новый архив и перезапустить сервер.
 
 В текущей Pterodactyl-сети backend подключается к внутреннему адресу контейнера PostgreSQL. Published port через адрес хоста внутри `pterodactyl_nw` давал таймаут. Текущий адрес контейнера нельзя считать постоянным: после пересоздания контейнера проверьте его IP и обновите `DATABASE_URL`, либо назначьте стабильное имя/адрес в Docker-сети.
 
