@@ -23,6 +23,19 @@ export function isNeoForgeInstallerOutput(entry: string) {
     || /\/net\/neoforged\/neoforge\/[^/]+\/neoforge-[^/]+-client\.jar$/i.test(normalized);
 }
 
+export function withQuickPlayMultiplayer(gameArgs: string[], serverAddress: string) {
+  const result: string[] = [];
+  for (let index = 0; index < gameArgs.length; index += 1) {
+    const argument = gameArgs[index];
+    if (argument === "--server" || argument === "--port" || argument === "--quickPlayMultiplayer") {
+      index += 1;
+      continue;
+    }
+    result.push(argument);
+  }
+  return [...result, "--quickPlayMultiplayer", serverAddress];
+}
+
 function expand(value: string, identity: LaunchIdentity, installRoot: string, versionName: string, resolvedClasspath: string) {
   const separator = identity.serverAddress.lastIndexOf(":");
   const hasPort = separator > -1 && /^\d+$/.test(identity.serverAddress.slice(separator + 1));
@@ -74,8 +87,12 @@ export async function launchMinecraft(installRoot: string, publicKeyPem: string,
   const expandedJvmArgs = launch.jvmArgs
     .filter((arg) => !/^-Xm[xs]/i.test(arg))
     .map((arg) => expand(arg, identity, installRoot, versionName, resolvedClasspath));
+  const expandedGameArgs = withQuickPlayMultiplayer(
+    launch.gameArgs.map((arg) => expand(arg, identity, installRoot, versionName, resolvedClasspath)),
+    identity.serverAddress,
+  );
   const platformJvmArgs = process.platform === "darwin" ? ["-XstartOnFirstThread"] : [];
-  const args = [`-Xms512M`, `-Xmx${memoryMb}M`, ...platformJvmArgs, ...expandedJvmArgs, "-cp", resolvedClasspath, launch.mainClass, ...launch.gameArgs.map((arg) => expand(arg, identity, installRoot, versionName, resolvedClasspath))];
+  const args = [`-Xms512M`, `-Xmx${memoryMb}M`, ...platformJvmArgs, ...expandedJvmArgs, "-cp", resolvedClasspath, launch.mainClass, ...expandedGameArgs];
   const logDir = path.join(installRoot, "logs");
   await mkdir(logDir, { recursive: true });
   const log = createWriteStream(path.join(logDir, "latest-launcher.log"), { flags: "w" });

@@ -143,7 +143,7 @@ const classpath = [...selected.entries()]
   .map(([relative]) => `libraries/${relative.replaceAll("\\", "/")}`);
 
 const baseJvm = base.arguments.jvm.filter((value) => typeof value === "string").filter((value, index, all) => value !== "-cp" && all[index - 1] !== "-cp" && value !== "${classpath}");
-const gameArgs = [...base.arguments.game.filter((value) => typeof value === "string"), ...neo.arguments.game.filter((value) => typeof value === "string"), "--server", "${server_host}", "--port", "${server_port}"];
+const gameArgs = [...base.arguments.game.filter((value) => typeof value === "string"), ...neo.arguments.game.filter((value) => typeof value === "string"), "--quickPlayMultiplayer", "${server_address}"];
 if (classpath.some((value) => value.startsWith("-") || value.startsWith("--") || !value.toLowerCase().endsWith(".jar"))) {
   throw new Error("Invalid launch.classpath: every entry must be a relative .jar path");
 }
