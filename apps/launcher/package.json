@@ -1,6 +1,6 @@
 {
   "name": "@rare/launcher",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "productName": "Мельхиор-1",
   "description": "Официальный лаунчер Minecraft-проекта Мельхиор-1",
   "author": "Rare Network",
@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "tsc -b && vite build && electron-builder",
-    "test": "vitest run electron/sync.test.ts",
+    "test": "vitest run electron/*.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

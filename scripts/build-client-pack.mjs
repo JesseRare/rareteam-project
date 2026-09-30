@@ -136,15 +136,11 @@ await rm(path.join(next, ".native-extract"), { recursive: true, force: true });
 
 const classpath = [...selected.entries()]
   .filter(([, artifact]) => !artifact.name.includes(":natives-"))
-  // The split "extra" jar contains the original obfuscated client classes.
-  // Putting it on the Java classpath alongside the SRG/patched client creates
-  // a second automatic module named "client" with duplicate Minecraft
-  // packages and makes ModuleLayer resolution fail before the game starts.
-  .filter(([relative]) => !/-extra\.jar$/i.test(relative))
+  // NeoForge discovers and combines these installer outputs itself from
+  // libraryDirectory. They must exist in the pack but not in Java's -cp.
+  .filter(([relative]) => !/net[\\/]minecraft[\\/]client[\\/][^\\/]+[\\/]client-[^\\/]+-(?:extra|srg)\.jar$/i.test(relative))
+  .filter(([relative]) => !/net[\\/]neoforged[\\/]neoforge[\\/][^\\/]+[\\/]neoforge-[^\\/]+-client\.jar$/i.test(relative))
   .map(([relative]) => `libraries/${relative.replaceAll("\\", "/")}`);
-for (const required of installerOutputs.slice(1)) {
-  if (!classpath.includes(required)) classpath.push(required);
-}
 
 const baseJvm = base.arguments.jvm.filter((value) => typeof value === "string").filter((value, index, all) => value !== "-cp" && all[index - 1] !== "-cp" && value !== "${classpath}");
 const gameArgs = [...base.arguments.game.filter((value) => typeof value === "string"), ...neo.arguments.game.filter((value) => typeof value === "string"), "--server", "${server_host}", "--port", "${server_port}"];

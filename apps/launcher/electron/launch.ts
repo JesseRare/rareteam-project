@@ -17,6 +17,12 @@ function safeRelative(value: string) {
   return value.length > 0 && !path.isAbsolute(value) && !value.split(/[\\/]/).includes("..");
 }
 
+export function isNeoForgeInstallerOutput(entry: string) {
+  const normalized = `/${entry.replaceAll("\\", "/")}`;
+  return /\/net\/minecraft\/client\/[^/]+\/client-[^/]+-(?:extra|srg)\.jar$/i.test(normalized)
+    || /\/net\/neoforged\/neoforge\/[^/]+\/neoforge-[^/]+-client\.jar$/i.test(normalized);
+}
+
 function expand(value: string, identity: LaunchIdentity, installRoot: string, versionName: string, resolvedClasspath: string) {
   const separator = identity.serverAddress.lastIndexOf(":");
   const hasPort = separator > -1 && /^\d+$/.test(identity.serverAddress.slice(separator + 1));
@@ -34,7 +40,7 @@ function expand(value: string, identity: LaunchIdentity, installRoot: string, ve
     .replaceAll("${version_name}", versionName)
     .replaceAll("${assets_index_name}", "17")
     .replaceAll("${launcher_name}", "RareLauncher")
-    .replaceAll("${launcher_version}", "0.1.3")
+    .replaceAll("${launcher_version}", "0.1.4")
     .replaceAll("${user_type}", "mojang")
     .replaceAll("${version_type}", "RareTeam")
     .replaceAll("${clientid}", "")
@@ -48,7 +54,10 @@ export async function launchMinecraft(installRoot: string, publicKeyPem: string,
   const manifest = verifyManifest(JSON.parse(await readFile(path.join(installRoot, ".rare-manifest.json"), "utf8")), publicKeyPem) as BuildManifest;
   const launch = manifest.launch;
   if (!launch) throw new Error("This build has no launch configuration");
-  const classpath = launch.classpath.filter((entry) => !/-extra\.jar$/i.test(entry));
+  // NeoForge locates and combines these installer outputs itself through
+  // libraryDirectory. Passing them directly through -cp creates overlapping
+  // Java modules named minecraft/client and fails ModuleLayer resolution.
+  const classpath = launch.classpath.filter((entry) => !isNeoForgeInstallerOutput(entry));
   if (!launch.mainClass || classpath.some((entry) => !safeRelative(entry) || entry.startsWith("-") || entry.startsWith("--") || !entry.toLowerCase().endsWith(".jar"))) {
     throw new Error("Invalid launch configuration: classpath must contain only relative .jar files");
   }
