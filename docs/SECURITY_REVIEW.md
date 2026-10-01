@@ -11,7 +11,8 @@ process launch, uploads, deployment workflows and production dependencies.
   rather than trusting arbitrary proxy chains.
 - Unexpected HTTP 500 responses no longer expose internal exception messages.
 - Control panel scripts use a per-response CSP nonce; inline event attributes
-  are forbidden.
+  are forbidden. Admin authentication uses a 15-minute HttpOnly, Secure,
+  SameSite=Strict cookie instead of browser localStorage tokens.
 - Role icons validate the PNG signature in addition to MIME type and size.
 - Game-server API keys are compared with `timingSafeEqual`.
 - Electron main process fetches manifest URLs and public keys from the trusted
@@ -33,6 +34,4 @@ process launch, uploads, deployment workflows and production dependencies.
 
 - Add integration tests with PostgreSQL for auth races, role hierarchy and bans.
 - Add signing/notarization for macOS and Authenticode for Windows.
-- Move the LAN control panel from browser localStorage tokens to a dedicated
-  short-lived administrative session when a separate admin frontend is built.
-- Add a SourceMod adapter before enforcing RareTeam bans/roles in CSS v34.
+- If CSS roles/bans are added later, map them to a verified Steam identity without making RareLauncher mandatory.

@@ -8,10 +8,12 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "manifest": "tsx src/cli/build-manifest.ts",
-    "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "test": "vitest run --exclude integration/**",
+    "lint": "tsc --noEmit",
+    "test:integration": "vitest run integration/security.integration.test.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.2",
     "@fastify/jwt": "^10.0.0",

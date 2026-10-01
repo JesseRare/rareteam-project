@@ -242,7 +242,7 @@ Actual end-user verification still needed:
 Priority order:
 
 1. Test the first Survival Jim CSS v34 client launch on Windows using a clean base client directory.
-2. Build the SourceMod/Metamod authentication adapter for RareTeam roles and bans.
+2. Keep CSS direct-connect compatible; only add optional SteamID-based roles/bans if needed later.
 3. Migrate Windows users from the extracted portable build to the NSIS installer once; later versions can auto-update.
 4. Sign/notarize macOS builds and Authenticode-sign Windows builds.
 5. Add real server metrics/history (TPS, MSPT, memory, uptime) to the control dashboard.

@@ -25,9 +25,9 @@ hl2.exe -game cstrike +exec rareteam.cfg +connect play.rarenetwork.ru:27015
 The launcher rejects missing client binaries and symlinked managed directories
 before copying files. CSS launch is currently Windows-only.
 
-## Next adapter phase
+## Access model
 
-The current CSS integration launches and monitors the server. It does not yet
-provide RareTeam account tickets, roles, bans or cosmetics inside Source. That
-requires a server-side SourceMod/Metamod adapter which validates short-lived
-backend tickets and maps Steam/account identities.
+The CSS server does not require RareLauncher or a RareTeam ticket. Players may
+connect directly from any compatible CSS v34 client. RareLauncher is an
+optional convenience for installing the RareTeam theme and opening the client.
+Minecraft ticket authentication remains separate and unchanged.

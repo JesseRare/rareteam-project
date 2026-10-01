@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import argon2 from "argon2";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -62,6 +63,33 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
       )
       .type("text/html; charset=utf-8")
       .send(controlPanelHtml(nonce));
+  });
+
+  app.post("/api/login", { config: { rateLimit: { max: 8, timeWindow: "15 minutes" } } }, async (request, reply) => {
+    const input = z.object({ login: z.string().min(3).max(254), password: z.string().min(8).max(256) }).parse(request.body);
+    const result = await db.query(`select id,username,password_hash,disabled_at from users
+      where lower(username)=lower($1) or lower(email)=lower($1)`, [input.login]);
+    const user = result.rows[0];
+    if (!user || user.disabled_at || !(await argon2.verify(user.password_hash, input.password))) {
+      return reply.code(401).send({ code: "invalid_credentials", error: "Неверный логин или пароль" });
+    }
+    const access = await loadAccess(user.id);
+    if (!access.permissions.length) return reply.code(403).send({ code: "forbidden", error: "Нет доступа к панели" });
+    const token = await app.jwt.sign({ sub: user.id, username: user.username, roles: [] }, { expiresIn: "15m" });
+    reply.setCookie("rare_control", token, {
+      path: "/control",
+      httpOnly: true,
+      secure: config.PUBLIC_URL.startsWith("https://"),
+      sameSite: "strict",
+      maxAge: 15 * 60,
+    });
+    await audit(user.id, "control.login", user.id);
+    return { ok: true, expiresIn: 900 };
+  });
+
+  app.post("/api/logout", async (_request, reply) => {
+    reply.clearCookie("rare_control", { path: "/control" });
+    return reply.code(204).send();
   });
 
   app.get("/api/session", { onRequest: [app.authenticate] }, async (request) => {
