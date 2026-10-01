@@ -41,3 +41,15 @@ Windows-пользователи должны установить NSIS-верс
 следующих версий.
 
 Для production macOS приложение должно быть подписано Developer ID и нотарифицировано Apple. Для production Windows рекомендуется подпись Authenticode.
+
+## Code signing status
+
+Windows Setup and Portable artifacts are signed with the self-signed
+`RareTeam Development Code Signing` certificate whose public DER certificate is
+kept in `certificates/`. CI verifies that both artifacts contain that signature.
+This provides a stable internal signer but is **not publicly trusted** and does
+not remove Microsoft SmartScreen warnings. Production trust requires a CA-issued
+Authenticode certificate.
+
+macOS remains unsigned and cannot be notarized until an Apple Developer ID and
+notarization credentials are available.

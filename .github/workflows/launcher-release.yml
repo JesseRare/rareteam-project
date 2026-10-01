@@ -66,9 +66,25 @@ jobs:
       - name: Build Windows launcher
         if: matrix.platform == 'win'
         shell: bash
+        env:
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: |
           pnpm --filter @rare/launcher exec electron-builder --win nsis portable --x64 --publish never
           mv apps/launcher/release/latest.yml "apps/launcher/release/${{ matrix.metadata }}"
+      - name: Verify Windows development signatures
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $artifacts = Get-ChildItem "apps/launcher/release/*.exe" | Where-Object { $_.Name -match "Windows-(Setup|Portable)-x64" }
+          if ($artifacts.Count -lt 2) { throw "Expected signed Setup and Portable artifacts" }
+          foreach ($artifact in $artifacts) {
+            $signature = Get-AuthenticodeSignature $artifact.FullName
+            if (-not $signature.SignerCertificate) { throw "$($artifact.Name) has no Authenticode signature" }
+            if ($signature.SignerCertificate.Subject -notmatch "RareTeam Development Code Signing") { throw "$($artifact.Name) has an unexpected signer" }
+            Write-Host "$($artifact.Name): signer=$($signature.SignerCertificate.Subject), trust=$($signature.Status)"
+          }
       - name: Smoke test Windows installer and app
         if: matrix.platform == 'win'
         shell: pwsh
