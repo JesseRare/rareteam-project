@@ -3,7 +3,7 @@
   "1"
   {
     "label" "SURVIVAL JIM"
-    "command" "engine connect play.rarenetwork.ru:27015"
+    "command" "engine connect {{SERVER_ADDRESS}}"
   }
   "2"
   {

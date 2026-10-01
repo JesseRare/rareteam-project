@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { cp, lstat, stat } from "node:fs/promises";
+import { cp, lstat, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 function assertServerAddress(value: string) {
@@ -33,10 +33,12 @@ export async function launchSourceGame(clientRoot: string, themeRoot: string, se
   }
   await rejectSymlinkedManagedPaths(clientRoot);
   await cp(themeRoot, clientRoot, { recursive: true, force: true });
+  const menuPath = path.join(clientRoot, "cstrike", "resource", "GameMenu.res");
+  const menu = await readFile(menuPath, "utf8");
+  await writeFile(menuPath, menu.replaceAll("{{SERVER_ADDRESS}}", assertServerAddress(serverAddress)), { mode: 0o644 });
   const child = spawn(executable, [
     "-game", "cstrike",
     "+exec", "rareteam.cfg",
-    "+connect", assertServerAddress(serverAddress),
   ], { cwd: clientRoot, detached: true, stdio: "ignore" });
   child.unref();
   return { pid: child.pid ?? 0 };
