@@ -23,6 +23,7 @@ const schema = z.object({
   PTERODACTYL_API_KEY: z.preprocess(emptyAsUndefined, z.string().min(20).optional()),
   PTERODACTYL_SERVER_ID: z.preprocess(emptyAsUndefined, z.string().regex(/^[a-z0-9-]+$/i).optional()),
   PTERODACTYL_MODS_DIRECTORY: z.string().default("/client-mods"),
+  CONTROL_ALLOW_PUBLIC: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
 });
 
 export const config = schema.parse(process.env);

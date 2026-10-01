@@ -42,6 +42,14 @@ function assertGrantablePermissions(actorPermissions: string[], requested: strin
 }
 
 export const controlRoutes: FastifyPluginAsync = async (app) => {
+  app.addHook("onRequest", async (request, reply) => {
+    if (config.CONTROL_ALLOW_PUBLIC) return;
+    const ip = request.ip.replace(/^::ffff:/, "");
+    const privateAddress = ip === "::1" || ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")
+      || /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+    if (!privateAddress) return reply.code(404).send({ code: "not_found", error: "Not found" });
+  });
+
   app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(controlPanelHtml()));
 
   app.get("/api/session", { onRequest: [app.authenticate] }, async (request) => {

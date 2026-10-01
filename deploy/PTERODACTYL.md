@@ -58,6 +58,7 @@ PTERODACTYL_URL=https://pt.example.com
 PTERODACTYL_API_KEY=<client-api-key>
 PTERODACTYL_SERVER_ID=server-identifier
 PTERODACTYL_MODS_DIRECTORY=/client-mods
+CONTROL_ALLOW_PUBLIC=false
 ```
 
 На каждом цикле `PACK_POLL_SECONDS` backend:
