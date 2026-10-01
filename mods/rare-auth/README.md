@@ -17,6 +17,16 @@ RARE_AUTH_SERVER_ID=melchior-1
 RARE_AUTH_SERVER_KEY=<same value as backend GAME_SERVER_KEY>
 ```
 
+For Pterodactyl, the same values can be placed in
+`config/rare-auth.properties`:
+
+```properties
+backend-url=https://launcher-api.rarenetwork.ru
+server-id=melchior-1
+server-key=<same value as backend GAME_SERVER_KEY>
+```
+
+System properties and environment variables take precedence over the file.
 The server key must only exist in the Minecraft server environment. Never put it
 in the client pack or launcher.
 

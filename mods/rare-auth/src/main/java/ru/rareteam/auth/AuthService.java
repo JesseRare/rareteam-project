@@ -2,21 +2,27 @@ package ru.rareteam.auth;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class AuthService {
+    private static final Properties FILE_SETTINGS = loadFileSettings();
     private static final String BACKEND_URL =
-            setting("rare.auth.backendUrl", "RARE_AUTH_BACKEND_URL", "https://launcher-api.rarenetwork.ru");
+            setting("rare.auth.backendUrl", "RARE_AUTH_BACKEND_URL", "backend-url", "https://launcher-api.rarenetwork.ru");
     private static final String SERVER_ID =
-            setting("rare.auth.serverId", "RARE_AUTH_SERVER_ID", "melchior-1");
+            setting("rare.auth.serverId", "RARE_AUTH_SERVER_ID", "server-id", "melchior-1");
     private static final String SERVER_KEY =
-            setting("rare.auth.serverKey", "RARE_AUTH_SERVER_KEY", "");
+            setting("rare.auth.serverKey", "RARE_AUTH_SERVER_KEY", "server-key", "");
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
@@ -65,13 +71,32 @@ public final class AuthService {
         return json.get(field).getAsString();
     }
 
-    private static String setting(String property, String environment, String fallback) {
+    private static String setting(String property, String environment, String fileKey, String fallback) {
         String propertyValue = System.getProperty(property);
         if (propertyValue != null && !propertyValue.isBlank()) {
             return propertyValue.trim();
         }
         String environmentValue = System.getenv(environment);
-        return environmentValue == null || environmentValue.isBlank() ? fallback : environmentValue.trim();
+        if (environmentValue != null && !environmentValue.isBlank()) {
+            return environmentValue.trim();
+        }
+        String fileValue = FILE_SETTINGS.getProperty(fileKey);
+        return fileValue == null || fileValue.isBlank() ? fallback : fileValue.trim();
+    }
+
+    private static Properties loadFileSettings() {
+        Properties properties = new Properties();
+        Path path = Path.of("config", "rare-auth.properties");
+        if (!Files.isRegularFile(path)) {
+            return properties;
+        }
+        try (InputStream input = Files.newInputStream(path)) {
+            properties.load(input);
+            return properties;
+        } catch (IOException exception) {
+            RareAuthMod.LOGGER.error("Could not read {}", path, exception);
+            return properties;
+        }
     }
 
     private static String trimTrailingSlash(String value) {
