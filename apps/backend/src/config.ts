@@ -24,6 +24,7 @@ const schema = z.object({
   PTERODACTYL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   PTERODACTYL_API_KEY: z.preprocess(emptyAsUndefined, z.string().min(20).optional()),
   PTERODACTYL_SERVER_ID: z.preprocess(emptyAsUndefined, z.string().regex(/^[a-z0-9-]+$/i).optional()),
+  CSS_PTERODACTYL_SERVER_ID: z.string().regex(/^[a-z0-9-]+$/i).default("2420d205"),
   PTERODACTYL_MODS_DIRECTORY: z.string().default("/client-mods"),
   CONTROL_ALLOW_PUBLIC: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
 });

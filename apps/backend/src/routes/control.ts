@@ -9,6 +9,7 @@ import { db } from "../db.js";
 import { controlPanelHtml } from "../control-panel.js";
 import { queryMinecraft } from "../minecraft-status.js";
 import { querySource } from "../source-status.js";
+import { queryPterodactylRunning } from "../pterodactyl-status.js";
 
 const roleInput = z.object({
   name: z.string().trim().min(1).max(64),
@@ -81,10 +82,14 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
         (select count(*)::int from role_definitions) roles,
         (select count(*)::int from refresh_sessions where revoked_at is null and expires_at>now()) active_sessions
     `);
-    const [minecraft, source] = await Promise.all([
+    const [minecraft, queriedSource] = await Promise.all([
       queryMinecraft(config.MINECRAFT_STATUS_ADDRESS ?? config.MINECRAFT_ADDRESS),
       querySource(config.CSS_STATUS_ADDRESS ?? config.CSS_ADDRESS),
     ]);
+    const cssRunning = queriedSource.online ? true : await queryPterodactylRunning(config.CSS_PTERODACTYL_SERVER_ID);
+    const source = queriedSource.online
+      ? queriedSource
+      : { ...queriedSource, online: cssRunning === true, maxPlayers: cssRunning === true ? 64 : 0 };
     return {
       ...result.rows[0],
       uptimeSeconds: Math.floor(process.uptime()),

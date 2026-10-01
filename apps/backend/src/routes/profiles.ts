@@ -3,6 +3,7 @@ import { db } from "../db.js";
 import { config } from "../config.js";
 import { queryMinecraft } from "../minecraft-status.js";
 import { querySource } from "../source-status.js";
+import { queryPterodactylRunning } from "../pterodactyl-status.js";
 
 export const profileRoutes: FastifyPluginAsync = async (app) => {
   app.get("/", async () => {
@@ -21,7 +22,11 @@ export const profileRoutes: FastifyPluginAsync = async (app) => {
         ...status,
       };
     }));
-    const sourceStatus = await querySource(config.CSS_STATUS_ADDRESS ?? config.CSS_ADDRESS);
+    const queriedSourceStatus = await querySource(config.CSS_STATUS_ADDRESS ?? config.CSS_ADDRESS);
+    const processRunning = queriedSourceStatus.online ? true : await queryPterodactylRunning(config.CSS_PTERODACTYL_SERVER_ID);
+    const sourceStatus = queriedSourceStatus.online
+      ? queriedSourceStatus
+      : { ...queriedSourceStatus, online: processRunning === true, maxPlayers: processRunning === true ? 64 : 0, statusSource: "pterodactyl" };
     return [...minecraftProfiles, {
       id: "survival-jim-css",
       gameType: "source" as const,
