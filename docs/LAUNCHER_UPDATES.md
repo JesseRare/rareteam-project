@@ -4,11 +4,15 @@
 
 ## Канал
 
-Стабильные обновления публикуются по адресу:
+Стабильные обновления публикуются раздельно для каждой платформы и архитектуры:
 
 ```text
-https://launcher-api.rarenetwork.ru/artifacts/launcher/
+https://launcher-api.rarenetwork.ru/artifacts/launcher/darwin-arm64/
+https://launcher-api.rarenetwork.ru/artifacts/launcher/darwin-x64/
+https://launcher-api.rarenetwork.ru/artifacts/launcher/win32-x64/
 ```
+
+Лаунчер автоматически выбирает каталог `${process.platform}-${process.arch}`.
 
 Лаунчер:
 
@@ -23,6 +27,6 @@ https://launcher-api.rarenetwork.ru/artifacts/launcher/
 - Windows: NSIS-инсталлятор, blockmap и `latest.yml`;
 - macOS: ZIP, blockmap и `latest-mac.yml`.
 
-Файлы нужно размещать в `${ARTIFACT_ROOT}/launcher`. Первая установка версии `0.2.0` выполняется вручную; последующие версии обновляются автоматически.
+Файлы нужно размещать в соответствующем каталоге `${ARTIFACT_ROOT}/launcher/<platform>-<arch>`. Первая установка версии `0.2.0` выполняется вручную; последующие версии обновляются автоматически.
 
 Для production macOS приложение должно быть подписано Developer ID и нотарифицировано Apple. Для production Windows рекомендуется подпись Authenticode.

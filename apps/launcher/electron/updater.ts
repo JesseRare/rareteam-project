@@ -33,9 +33,11 @@ export function configureUpdater(window: BrowserWindow) {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowPrerelease = false;
+  const updateBaseUrl = (process.env.RARE_LAUNCHER_UPDATE_URL ??
+    "https://launcher-api.rarenetwork.ru/artifacts/launcher").replace(/\/$/, "");
   autoUpdater.setFeedURL({
     provider: "generic",
-    url: process.env.RARE_LAUNCHER_UPDATE_URL ?? "https://launcher-api.rarenetwork.ru/artifacts/launcher",
+    url: `${updateBaseUrl}/${process.platform}-${process.arch}`,
   });
   autoUpdater.on("checking-for-update", () => publish({ phase: "checking" }));
   autoUpdater.on("update-available", (info) => publish({ phase: "available", version: info.version }));
