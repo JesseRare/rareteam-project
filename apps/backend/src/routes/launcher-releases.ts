@@ -17,17 +17,17 @@ const macReleases: MacRelease[] = [
     arch: "arm64",
     filename: "Melchior-1-0.2.0-macOS-arm64.zip",
     sha512:
-      "EuAdCUiSWll477PcaiFI+kIbu4Ma1iKXVy7bZd3PhIB9BvfzNqZT2QD9Z6lDgACdkrOnrFiXc6daGVRGf957ew==",
-    size: 110_138_877,
-    releaseDate: "2026-10-01T02:58:53.603286Z",
+      "VW0EdGzCQ5t+eZ0E2WQzTwxeoE/+mS/8ycqNXooCO1IvGhLrPWJ0LclJA1b+Ibh+1Nb/ewPXhOdpF5BkEEbypg==",
+    size: 110_138_889,
+    releaseDate: "2026-10-01T03:19:30.248755Z",
   },
   {
     arch: "x64",
     filename: "Melchior-1-0.2.0-macOS-x64.zip",
     sha512:
-      "ZQnZGFCq0ZZvek5Xtul9H+RQPt1b0/kLNB89xtgisPb3xY2kqQgwyRxWWxOdMXpwGvkWWsJY7xZUzXUtJH2kMA==",
-    size: 115_263_223,
-    releaseDate: "2026-10-01T02:58:53.976280Z",
+      "+aY3h+kuTEZ8hs9sw1ta0RHWGcFX5yX9lFsAXyXQgvRlS+uu6ytpXh/aVxUmQj1C8KHoTG6H7aGuELsugH7QDw==",
+    size: 115_263_235,
+    releaseDate: "2026-10-01T03:19:30.532962Z",
   },
 ];
 

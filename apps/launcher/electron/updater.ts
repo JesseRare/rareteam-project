@@ -1,6 +1,8 @@
 import type { BrowserWindow } from "electron";
 import { app, ipcMain } from "electron";
-import { autoUpdater } from "electron-updater";
+import electronUpdater from "electron-updater";
+
+const { autoUpdater } = electronUpdater;
 
 export type UpdateState =
   | { phase: "idle" | "checking" | "not-available" }
