@@ -12,6 +12,8 @@ public final class RareAuthMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public RareAuthMod(IEventBus modEventBus, ModContainer modContainer) {
+        modEventBus.addListener(AuthNetwork::registerPayloads);
+        modEventBus.addListener(AuthNetwork::registerConfigurationTask);
         LOGGER.info("RareTeam Auth initialized");
     }
 }
