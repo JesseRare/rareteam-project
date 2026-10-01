@@ -6,7 +6,7 @@
 
 **Branch:** `main`
 
-**Current source head when written:** `656983a`
+**Current source head when written:** the commit containing this document
 
 This is the canonical concise handoff for humans and AI agents. Verify only facts that may have changed since this timestamp; do not repeat the old discovery work.
 
@@ -70,7 +70,7 @@ Relevant files:
 
 ### Launcher releases
 
-Version: `0.2.0`.
+Manual baseline version: `0.2.0`. Automated releases use `0.3.<GitHub Actions run number>`.
 
 GitHub release: `https://github.com/JesseRare/rareteam-project/releases/tag/v0.2.0`
 
@@ -97,9 +97,9 @@ Known release limitations:
 - macOS builds are unsigned and not notarized. Gatekeeper may require:
   `xattr -dr com.apple.quarantine "/Applications/Melchior-1.app"`
 - Reliable production macOS auto-install requires Apple Developer ID signing/notarization.
-- Windows currently ships as an extracted portable ZIP containing `Melchior-1.exe`.
-- Native NSIS/portable `.exe` packaging from Linux failed only because `wine` is unavailable. A Windows GitHub Actions workflow was attempted but the current GitHub CLI OAuth token lacks the `workflow` scope, so the workflow file was not committed.
-- The Windows feed `/artifacts/launcher/win32-x64/latest.yml` is not published yet. Add it when a native Windows installer is built.
+- GitHub Actions now builds native Windows NSIS + portable artifacts and macOS arm64/x64 archives after every push to `main`.
+- Backend serves architecture-specific metadata from the latest GitHub Release, including `/artifacts/launcher/win32-x64/latest.yml`.
+- Existing Windows portable users need one manual migration to the NSIS installer before reliable in-place auto-updates.
 
 Relevant files:
 
@@ -240,9 +240,9 @@ Actual end-user verification still needed:
 
 Priority order:
 
-1. Collect results from real-user testing of the corrected launcher and control-panel login.
-2. Build signed/native Windows NSIS + portable executables on Windows; publish `latest.yml` and the `win32-x64` update route.
-3. Add automated release CI after GitHub credentials receive `workflow` scope.
+1. Add the three `production` GitHub secrets documented in `deploy/PTERODACTYL.md` and verify the first automatic backend deployment.
+2. Verify the first automatic `0.3.<run number>` GitHub launcher release and all three update metadata endpoints.
+3. Migrate Windows users from the extracted portable build to the NSIS installer once; later versions can auto-update.
 4. Sign/notarize macOS builds and Authenticode-sign Windows builds.
 5. Add real server metrics/history (TPS, MSPT, memory, uptime) to the control dashboard.
 6. Add adapters for future non-Minecraft game servers while reusing global roles/bans.

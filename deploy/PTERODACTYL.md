@@ -36,6 +36,24 @@ if [ ! -f .melchior-v3 ]; then tar -xzf "Мельхиор-1-backend-update.tar.g
 
 `SERVER_PORT` задаётся Pterodactyl из основной allocation backend-сервера и имеет приоритет над `PORT` из `.env`. Архив обновления не должен содержать `.env`, иначе он перезапишет рабочие пароли и ключи. Перед установкой новой версии через этот startup нужно удалить `.melchior-v3`, загрузить новый архив и перезапустить сервер.
 
+## Автоматический production-деплой
+
+Workflow `.github/workflows/backend-production.yml` запускается после каждого
+push в `main`. Он проверяет и собирает backend, создаёт production-архив,
+загружает его через Pterodactyl Client API, удаляет `.melchior-v3`,
+перезапускает сервер и ожидает успешный `/health`.
+
+В GitHub Environment `production` должны быть заданы secrets:
+
+```text
+PTERODACTYL_URL
+PTERODACTYL_API_KEY
+PTERODACTYL_BACKEND_SERVER_ID
+```
+
+API-ключ должен иметь только необходимые права на файлы и питание backend-
+сервера. Архив по-прежнему не содержит `.env`.
+
 В текущей Pterodactyl-сети backend подключается к внутреннему адресу контейнера PostgreSQL. Published port через адрес хоста внутри `pterodactyl_nw` давал таймаут. Текущий адрес контейнера нельзя считать постоянным: после пересоздания контейнера проверьте его IP и обновите `DATABASE_URL`, либо назначьте стабильное имя/адрес в Docker-сети.
 
 Для PostgreSQL-контейнера сейчас нужен startup с `nss_wrapper`, потому что Wings запускает его с UID 999 без записи в `/etc/passwd`. PostgreSQL также запускается с `-k /tmp`; доступ backend разрешён правилом `pg_hba.conf` для `172.18.0.0/16`.

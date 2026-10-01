@@ -1,0 +1,68 @@
+name: Backend production
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backend-production
+  cancel-in-progress: false
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rare/backend lint
+      - run: pnpm --filter @rare/backend test
+      - run: pnpm --filter @rare/backend build
+      - run: node scripts/package-backend.mjs
+      - run: tar -C deploy/backend-package -czf backend-update.tar.gz .
+      - name: Verify deployment secrets
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+          PTERODACTYL_BACKEND_SERVER_ID: ${{ secrets.PTERODACTYL_BACKEND_SERVER_ID }}
+        run: |
+          test -n "$PTERODACTYL_URL"
+          test -n "$PTERODACTYL_API_KEY"
+          test -n "$PTERODACTYL_BACKEND_SERVER_ID"
+      - name: Upload backend archive
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+          PTERODACTYL_BACKEND_SERVER_ID: ${{ secrets.PTERODACTYL_BACKEND_SERVER_ID }}
+        run: |
+          set -euo pipefail
+          api="${PTERODACTYL_URL%/}/api/client/servers/${PTERODACTYL_BACKEND_SERVER_ID}"
+          auth="Authorization: Bearer ${PTERODACTYL_API_KEY}"
+          upload_url="$(curl --fail --silent --show-error -H "$auth" -H "Accept: application/json" "$api/files/upload?directory=/" | jq -er '.attributes.url')"
+          curl --fail --silent --show-error -F 'files=@backend-update.tar.gz;filename=Мельхиор-1-backend-update.tar.gz' "$upload_url"
+      - name: Apply update and restart
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+          PTERODACTYL_BACKEND_SERVER_ID: ${{ secrets.PTERODACTYL_BACKEND_SERVER_ID }}
+        run: |
+          set -euo pipefail
+          api="${PTERODACTYL_URL%/}/api/client/servers/${PTERODACTYL_BACKEND_SERVER_ID}"
+          auth="Authorization: Bearer ${PTERODACTYL_API_KEY}"
+          curl --fail --silent --show-error -X POST -H "$auth" -H "Accept: application/json" -H "Content-Type: application/json" --data '{"root":"/","files":[".melchior-v3"]}' "$api/files/delete"
+          curl --fail --silent --show-error -X POST -H "$auth" -H "Accept: application/json" -H "Content-Type: application/json" --data '{"signal":"restart"}' "$api/power"
+      - name: Verify production health
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error https://launcher-api.rarenetwork.ru/health >/dev/null; then exit 0; fi
+            sleep 10
+          done
+          echo "Backend did not become healthy in time" >&2
+          exit 1

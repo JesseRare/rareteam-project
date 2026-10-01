@@ -1,63 +1,55 @@
 import type { FastifyPluginAsync } from "fastify";
 
-type MacRelease = {
-  arch: "arm64" | "x64";
-  filename: string;
-  sha512: string;
-  size: number;
-  releaseDate: string;
-};
+const githubLatestBase =
+  "https://github.com/JesseRare/rareteam-project/releases/latest/download";
 
-const version = "0.2.0";
-const githubReleaseBase =
-  "https://github.com/JesseRare/rareteam-project/releases/download/v0.2.0";
-
-const macReleases: MacRelease[] = [
+const channels = [
   {
-    arch: "arm64",
-    filename: "Melchior-1-0.2.0-macOS-arm64.zip",
-    sha512:
-      "VW0EdGzCQ5t+eZ0E2WQzTwxeoE/+mS/8ycqNXooCO1IvGhLrPWJ0LclJA1b+Ibh+1Nb/ewPXhOdpF5BkEEbypg==",
-    size: 110_138_889,
-    releaseDate: "2026-10-01T03:19:30.248755Z",
+    prefix: "/artifacts/launcher/darwin-arm64",
+    publicMetadata: "latest-mac.yml",
+    releaseMetadata: "latest-mac-arm64.yml",
   },
   {
-    arch: "x64",
-    filename: "Melchior-1-0.2.0-macOS-x64.zip",
-    sha512:
-      "+aY3h+kuTEZ8hs9sw1ta0RHWGcFX5yX9lFsAXyXQgvRlS+uu6ytpXh/aVxUmQj1C8KHoTG6H7aGuELsugH7QDw==",
-    size: 115_263_235,
-    releaseDate: "2026-10-01T03:19:30.532962Z",
+    prefix: "/artifacts/launcher/darwin-x64",
+    publicMetadata: "latest-mac.yml",
+    releaseMetadata: "latest-mac-x64.yml",
   },
-];
+  {
+    prefix: "/artifacts/launcher/win32-x64",
+    publicMetadata: "latest.yml",
+    releaseMetadata: "latest-win32-x64.yml",
+  },
+] as const;
 
-function metadata(release: MacRelease) {
-  return [
-    `version: ${version}`,
-    "files:",
-    `  - url: ${release.filename}`,
-    `    sha512: ${release.sha512}`,
-    `    size: ${release.size}`,
-    `path: ${release.filename}`,
-    `sha512: ${release.sha512}`,
-    `releaseDate: '${release.releaseDate}'`,
-    "",
-  ].join("\n");
+async function loadReleaseMetadata(filename: string) {
+  const response = await fetch(`${githubLatestBase}/${filename}`, {
+    headers: { accept: "text/yaml", "cache-control": "no-cache" },
+    redirect: "follow",
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) {
+    throw Object.assign(new Error(`Launcher release metadata is unavailable: ${response.status}`), {
+      statusCode: 503,
+    });
+  }
+  return response.text();
 }
 
 export const launcherReleaseRoutes: FastifyPluginAsync = async (app) => {
-  for (const release of macReleases) {
-    const prefix = `/artifacts/launcher/darwin-${release.arch}`;
-
-    app.get(`${prefix}/latest-mac.yml`, async (_request, reply) =>
+  for (const channel of channels) {
+    app.get(`${channel.prefix}/${channel.publicMetadata}`, async (_request, reply) =>
       reply
         .header("Cache-Control", "no-cache, no-store, must-revalidate")
         .type("text/yaml; charset=utf-8")
-        .send(metadata(release)),
+        .send(await loadReleaseMetadata(channel.releaseMetadata)),
     );
 
-    app.get(`${prefix}/${release.filename}`, async (_request, reply) =>
-      reply.redirect(`${githubReleaseBase}/${release.filename}`),
-    );
+    app.get<{ Params: { "*": string } }>(`${channel.prefix}/*`, async (request, reply) => {
+      const filename = request.params["*"];
+      if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(filename)) {
+        return reply.code(404).send({ code: "not_found", error: "Not found" });
+      }
+      return reply.redirect(`${githubLatestBase}/${encodeURIComponent(filename)}`);
+    });
   }
 };

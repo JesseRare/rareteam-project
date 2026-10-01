@@ -1,0 +1,91 @@
+name: Launcher release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: launcher-release
+  cancel-in-progress: false
+env:
+  VERSION_SERIES: "0.3"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rare/launcher lint
+      - run: pnpm --filter @rare/launcher test
+  build:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14, platform: mac, arch: arm64, metadata: latest-mac-arm64.yml }
+          - { os: macos-14, platform: mac, arch: x64, metadata: latest-mac-x64.yml }
+          - { os: windows-latest, platform: win, arch: x64, metadata: latest-win32-x64.yml }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Set automatic version
+        shell: bash
+        run: |
+          VERSION="${VERSION_SERIES}.${GITHUB_RUN_NUMBER}"
+          node -e "const fs=require('fs');const f='apps/launcher/package.json';const p=JSON.parse(fs.readFileSync(f));p.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(p,null,2)+'\n')" "$VERSION"
+      - name: Build macOS launcher
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          pnpm --filter @rare/launcher exec electron-builder --mac zip --${{ matrix.arch }} --publish never
+          mv apps/launcher/release/latest-mac.yml "apps/launcher/release/${{ matrix.metadata }}"
+      - name: Build Windows launcher
+        if: matrix.platform == 'win'
+        shell: bash
+        run: |
+          pnpm --filter @rare/launcher exec electron-builder --win nsis portable --x64 --publish never
+          mv apps/launcher/release/latest.yml "apps/launcher/release/${{ matrix.metadata }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            apps/launcher/release/*.zip
+            apps/launcher/release/*.exe
+            apps/launcher/release/*.blockmap
+            apps/launcher/release/${{ matrix.metadata }}
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: launcher-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish latest GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${VERSION_SERIES}.${GITHUB_RUN_NUMBER}"
+          TAG="v${VERSION}"
+          gh release create "$TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --title "Melchior-1 ${VERSION}" --notes "Автоматическая production-сборка из commit ${GITHUB_SHA}." --latest
