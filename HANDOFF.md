@@ -6,7 +6,7 @@
 
 **Branch:** `main`
 
-**Current source head when written:** `bdbb04e`
+**Current source head when written:** `656983a`
 
 This is the canonical concise handoff for humans and AI agents. Verify only facts that may have changed since this timestamp; do not repeat the old discovery work.
 
@@ -59,13 +59,14 @@ Relevant files:
 
 ### Minecraft mod
 
-- Deployed version: `rare-auth 0.2.0`.
-- JAR name: `rare_auth-0.2.0.jar`.
-- SHA-256: `f05bf3f80274766ac67fb8d2eea91b7aba183684f1ccce5c3187244c9a5d37d4`.
+- Deployed version: `rare-auth 0.2.1`.
+- JAR name: `rare_auth-0.2.1.jar`.
+- SHA-256: `d2f699ff8226e9f5f54f18b62ee1a8ce5a7eb85857a29d650e17a2626f010f33`.
 - Installed in server `/mods`, server `/client-mods`, and backend `client-pack/mods`.
-- Minecraft restarted successfully; logs showed `rareteam Auth initialized`.
-- Public client manifest includes the 0.2.0 JAR.
-- Custom TAB shows rareteam branding, online users, primary role/icon, role ordering and colored ping.
+- Minecraft restarted successfully; logs showed `rareteam Auth 0.2.1`, `rareteam Auth initialized`, and normal server readiness.
+- Public client manifest includes the 0.2.1 JAR with the same SHA-256.
+- TAB now renders only while the player-list key is held; the old version canceled the vanilla layer every frame and therefore stayed visible continuously.
+- The 0.2.1 TAB is narrower and shorter, uses bordered column/row separators, and shows online users, primary role/icon, role ordering, colored ping, live TPS and available Minecraft JVM heap memory in the footer.
 
 ### Launcher releases
 
@@ -222,7 +223,7 @@ At the latest handoff:
 - Backend TypeScript lint passed.
 - Backend Vitest passed.
 - Backend production build passed.
-- rare-auth Gradle build passed before 0.2.0 deployment.
+- rare-auth 0.2.1 Gradle clean build passed; the JAR was deployed to all three required locations and verified in Minecraft logs and the public manifest.
 - Corrected macOS and Windows ZIP integrity tests passed.
 - Backend health and both macOS update YAML endpoints were verified after deployment.
 
@@ -231,8 +232,9 @@ Actual end-user verification still needed:
 1. Launch corrected macOS build on Apple Silicon and Intel hardware.
 2. Confirm login, update check, pack sync, Java download and Minecraft launch.
 3. Log into the LAN control panel as `jetarare` and confirm owner permissions.
-4. Create a role with a PNG icon, assign it, and verify icon/order/ping in TAB.
-5. Ban/unban a test account and verify live Minecraft enforcement.
+4. Hold and release TAB to confirm the 0.2.1 overlay no longer remains permanently visible; verify the compact grid, TPS, available RAM, role icon/order and ping.
+5. Create a role with a PNG icon, assign it, and verify it in TAB.
+6. Ban/unban a test account and verify live Minecraft enforcement.
 
 ## 8. Immediate next work
 
@@ -248,6 +250,7 @@ Priority order:
 
 ## 9. Recent commits that explain current state
 
+- `656983a` — make TAB key-bound and compact; add grid separators, TPS and available server JVM memory; bump rare-auth to 0.2.1.
 - `bdbb04e` — fix CommonJS `electron-updater` import and corrected release hashes.
 - `4c02727` — fix control-panel CSP/login behavior and distinct Windows artifact names.
 - `6cde21a` — architecture-specific macOS update routes.
