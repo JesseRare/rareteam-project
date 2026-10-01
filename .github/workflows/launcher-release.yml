@@ -50,6 +50,13 @@ jobs:
         run: |
           VERSION="${VERSION_SERIES}.${GITHUB_RUN_NUMBER}"
           node -e "const fs=require('fs');const f='apps/launcher/package.json';const p=JSON.parse(fs.readFileSync(f));p.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(p,null,2)+'\n')" "$VERSION"
+      - name: Compile launcher
+        shell: bash
+        env:
+          VITE_API_URL: https://launcher-api.rarenetwork.ru
+        run: |
+          pnpm --filter @rare/launcher exec tsc -b
+          pnpm --filter @rare/launcher exec vite build
       - name: Build macOS launcher
         if: matrix.platform == 'mac'
         shell: bash
