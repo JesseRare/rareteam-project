@@ -1,5 +1,7 @@
 import type { BrowserWindow } from "electron";
 import { app, ipcMain } from "electron";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import electronUpdater from "electron-updater";
 
 const { autoUpdater } = electronUpdater;
@@ -37,10 +39,17 @@ export function configureUpdater(window: BrowserWindow) {
   autoUpdater.allowPrerelease = false;
   const updateBaseUrl = (process.env.RARE_LAUNCHER_UPDATE_URL ??
     "https://launcher-api.rarenetwork.ru/artifacts/launcher").replace(/\/$/, "");
-  autoUpdater.setFeedURL({
-    provider: "generic",
-    url: `${updateBaseUrl}/${process.platform}-${process.arch}`,
-  });
+  const channelUrl = `${updateBaseUrl}/${process.platform}-${process.arch}`;
+  const runtimeConfig = path.join(app.getPath("userData"), "app-update.yml");
+  mkdirSync(path.dirname(runtimeConfig), { recursive: true });
+  writeFileSync(runtimeConfig, [
+    "provider: generic",
+    `url: ${channelUrl}`,
+    "updaterCacheDirName: rareteam-launcher-updater",
+    "",
+  ].join("\n"), { mode: 0o600 });
+  autoUpdater.updateConfigPath = runtimeConfig;
+  autoUpdater.setFeedURL({ provider: "generic", url: channelUrl });
   autoUpdater.on("checking-for-update", () => publish({ phase: "checking" }));
   autoUpdater.on("update-available", (info) => publish({ phase: "available", version: info.version }));
   autoUpdater.on("update-not-available", () => publish({ phase: "not-available" }));
