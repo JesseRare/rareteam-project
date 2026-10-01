@@ -69,6 +69,24 @@ jobs:
         run: |
           pnpm --filter @rare/launcher exec electron-builder --win nsis portable --x64 --publish never
           mv apps/launcher/release/latest.yml "apps/launcher/release/${{ matrix.metadata }}"
+      - name: Smoke test Windows installer and app
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Get-ChildItem "apps/launcher/release/*Windows-Setup-x64.exe" | Select-Object -First 1
+          if (-not $installer) { throw "Windows NSIS installer was not produced" }
+          $install = Start-Process -FilePath $installer.FullName -ArgumentList "/S" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "NSIS installer exited with code $($install.ExitCode)" }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA/Programs" -Filter "Melchior-1.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw "Installed Melchior-1.exe was not found" }
+          $process = Start-Process -FilePath $exe.FullName -ArgumentList "--disable-gpu" -PassThru
+          Start-Sleep -Seconds 20
+          if ($process.HasExited) { throw "Melchior-1 exited during startup with code $($process.ExitCode)" }
+          $runtimeConfig = Get-ChildItem "$env:APPDATA" -Filter "app-update.yml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $runtimeConfig) { throw "Runtime app-update.yml was not created" }
+          Stop-Process -Id $process.Id -Force
+          Write-Host "Windows smoke test passed: $($exe.FullName)"
       - uses: actions/upload-artifact@v4
         with:
           name: launcher-${{ matrix.platform }}-${{ matrix.arch }}
