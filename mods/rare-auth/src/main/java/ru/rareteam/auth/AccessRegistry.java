@@ -73,6 +73,15 @@ public final class AccessRegistry {
         if (server == null) return;
         JsonObject root = new JsonObject();
         root.addProperty("serverName", "Мельхиор-1");
+        long averageTickNanos = server.getAverageTickTimeNanos();
+        double tps = averageTickNanos <= 0
+                ? 20.0
+                : Math.min(20.0, 1_000_000_000.0 / averageTickNanos);
+        Runtime runtime = Runtime.getRuntime();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        long availableMemoryMb = Math.max(0L, runtime.maxMemory() - usedMemory) / (1024L * 1024L);
+        root.addProperty("tps", Math.round(tps * 10.0) / 10.0);
+        root.addProperty("availableMemoryMb", availableMemoryMb);
         JsonArray players = new JsonArray();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Identity identity = IDENTITIES.get(player.getUUID());

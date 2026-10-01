@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ClientAccessState {
     private static final Map<UUID, PlayerRole> PLAYERS = new ConcurrentHashMap<>();
     private static volatile String serverName = "Мельхиор-1";
+    private static volatile double tps = 20.0;
+    private static volatile long availableMemoryMb;
 
     private ClientAccessState() {}
 
@@ -17,6 +19,8 @@ public final class ClientAccessState {
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             serverName = root.has("serverName") ? root.get("serverName").getAsString() : "Мельхиор-1";
+            tps = root.has("tps") ? root.get("tps").getAsDouble() : 20.0;
+            availableMemoryMb = root.has("availableMemoryMb") ? root.get("availableMemoryMb").getAsLong() : 0L;
             Map<UUID, PlayerRole> next = new ConcurrentHashMap<>();
             for (var item : root.getAsJsonArray("players")) {
                 JsonObject player = item.getAsJsonObject();
@@ -56,6 +60,14 @@ public final class ClientAccessState {
 
     public static String serverName() {
         return serverName;
+    }
+
+    public static double tps() {
+        return tps;
+    }
+
+    public static long availableMemoryMb() {
+        return availableMemoryMb;
     }
 
     public static List<PlayerRole> players() {
