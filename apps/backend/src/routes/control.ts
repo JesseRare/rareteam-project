@@ -50,7 +50,15 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
     if (!privateAddress) return reply.code(404).send({ code: "not_found", error: "Not found" });
   });
 
-  app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(controlPanelHtml()));
+  app.get("/", async (_request, reply) =>
+    reply
+      .header(
+        "Content-Security-Policy",
+        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; script-src-attr 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'",
+      )
+      .type("text/html; charset=utf-8")
+      .send(controlPanelHtml()),
+  );
 
   app.get("/api/session", { onRequest: [app.authenticate] }, async (request) => {
     const access = await loadAccess(request.user.sub);
