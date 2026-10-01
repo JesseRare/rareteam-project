@@ -44,8 +44,10 @@ if [ ! -f .melchior-v3 ]; then tar -xzf "Мельхиор-1-backend-update.tar.g
 
 ## Автоматическая синхронизация модов
 
-Backend может читать клиентские `.jar` непосредственно из папки `/mods`
-Minecraft-сервера через Pterodactyl Client API. Это надёжнее межконтейнерного
+Backend читает клиентские `.jar` из отдельной папки `/client-mods`
+Minecraft-сервера через Pterodactyl Client API. Моды, необходимые обеим сторонам,
+нужно размещать и в `/mods`, и в `/client-mods`; чисто серверные моды остаются
+только в `/mods`. Это надёжнее межконтейнерного
 mount на установках Wings, где изменение mount не применяется к уже созданному
 контейнеру.
 
@@ -55,7 +57,7 @@ mount на установках Wings, где изменение mount не пр
 PTERODACTYL_URL=https://pt.example.com
 PTERODACTYL_API_KEY=<client-api-key>
 PTERODACTYL_SERVER_ID=server-identifier
-PTERODACTYL_MODS_DIRECTORY=/mods
+PTERODACTYL_MODS_DIRECTORY=/client-mods
 ```
 
 На каждом цикле `PACK_POLL_SECONDS` backend:

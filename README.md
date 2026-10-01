@@ -32,6 +32,9 @@ Backend опрашивает каталог `PACK_SOURCE` раз в 30 секу�
 
 При заданных `PTERODACTYL_URL`, `PTERODACTYL_API_KEY` и
 `PTERODACTYL_SERVER_ID` backend перед публикацией также синхронизирует `.jar`
-из `/mods` Minecraft-сервера в `PACK_SOURCE/mods`.
+из `/client-mods` Minecraft-сервера в `PACK_SOURCE/mods`.
 
-В Pterodactyl каталог `client-pack` игрового сервера монтируется в контейнер backend только для чтения. Файлы, которые нужны только серверу, не следует класть в `client-pack`.
+Моды, необходимые клиенту и серверу, следует дублировать в `/mods` и `/client-mods`.
+Чисто серверные моды должны находиться только в `/mods`, чтобы они не попадали
+в клиентскую сборку. В Pterodactyl каталог `client-pack` игрового сервера
+монтируется в контейнер backend только для чтения.
