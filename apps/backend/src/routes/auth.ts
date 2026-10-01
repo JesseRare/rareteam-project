@@ -55,13 +55,15 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     return issue(user);
   });
 
-  app.post("/refresh", async (request, reply) => {
-    const { refreshToken } = z.object({ refreshToken: z.string().min(20) }).parse(request.body);
-    const result = await db.query(`select u.id,u.username,u.minecraft_uuid,u.roles,u.skin_key,u.cape_key,u.skin_model,s.id session_id
-      from refresh_sessions s join users u on u.id=s.user_id
-      where s.token_hash=$1 and s.revoked_at is null and s.expires_at>now() and u.disabled_at is null`, [tokenHash(refreshToken)]);
+  app.post("/refresh", { config: { rateLimit: { max: 30, timeWindow: "15 minutes" } } }, async (request, reply) => {
+    const { refreshToken } = z.object({ refreshToken: z.string().min(20).max(256) }).parse(request.body);
+    const revoked = await db.query(`update refresh_sessions set revoked_at=now()
+      where token_hash=$1 and revoked_at is null and expires_at>now()
+      returning user_id`, [tokenHash(refreshToken)]);
+    if (!revoked.rows[0]) return reply.code(401).send({ code: "invalid_session", error: "Refresh session is invalid" });
+    const result = await db.query(`select id,username,minecraft_uuid,roles,skin_key,cape_key,skin_model
+      from users where id=$1 and disabled_at is null`, [revoked.rows[0].user_id]);
     if (!result.rows[0]) return reply.code(401).send({ code: "invalid_session", error: "Refresh session is invalid" });
-    await db.query("update refresh_sessions set revoked_at=now() where id=$1", [result.rows[0].session_id]);
     return issue(result.rows[0]);
   });
 

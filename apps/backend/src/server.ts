@@ -16,7 +16,11 @@ import { controlRoutes } from "./routes/control.js";
 import { launcherReleaseRoutes } from "./routes/launcher-releases.js";
 import path from "node:path";
 
-const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 2 * 1024 * 1024 });
+const trustedProxyRanges = [
+  "127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
+  "::1/128", "fc00::/7", "fe80::/10",
+];
+const app = Fastify({ logger: true, trustProxy: trustedProxyRanges, bodyLimit: 2 * 1024 * 1024 });
 await app.register(helmet, { crossOriginResourcePolicy: { policy: "cross-origin" } });
 await app.register(cors, { origin: true, credentials: false });
 await app.register(rateLimit, {
@@ -43,8 +47,8 @@ app.setErrorHandler((error, _request, reply) => {
   const statusCode = typeof (error as { statusCode?: unknown }).statusCode === "number"
     ? (error as { statusCode: number }).statusCode
     : 500;
-  const message = error instanceof Error ? error.message : "Internal server error";
-  return reply.code(statusCode).send({ code: statusCode === 429 ? "rate_limited" : "internal_error", error: message });
+  const publicError = statusCode < 500 && error instanceof Error ? error.message : "Internal server error";
+  return reply.code(statusCode).send({ code: statusCode === 429 ? "rate_limited" : "internal_error", error: publicError });
 });
 
 await migrate();

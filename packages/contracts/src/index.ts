@@ -52,14 +52,18 @@ export interface BuildManifest {
 
 export interface ServerProfile {
   id: string;
+  gameType: "minecraft" | "source";
   title: string;
   subtitle: string;
+  version: string;
   address: string;
-  manifestUrl: string;
-  manifestPublicKey: string;
+  manifestUrl?: string;
+  manifestPublicKey?: string;
   online: boolean;
   players: number;
   maxPlayers: number;
+  map?: string;
+  serverName?: string;
 }
 
 export interface AuthTokens {

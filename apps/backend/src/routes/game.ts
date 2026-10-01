@@ -2,9 +2,16 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { db } from "../db.js";
 import { randomToken, tokenHash } from "../security.js";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { config } from "../config.js";
 import { activeBan, loadAccess } from "../access.js";
+
+function validServerKey(value: string | string[] | undefined) {
+  if (typeof value !== "string") return false;
+  const supplied = Buffer.from(value);
+  const expected = Buffer.from(config.GAME_SERVER_KEY);
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
 
 export const gameRoutes: FastifyPluginAsync = async (app) => {
   app.post("/ticket", { onRequest: [app.authenticate] }, async (request, reply) => {
@@ -18,7 +25,7 @@ export const gameRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/ticket/consume", async (request, reply) => {
     const apiKey = request.headers["x-server-key"];
-    if (apiKey !== config.GAME_SERVER_KEY) return reply.code(401).send({ code: "invalid_server", error: "Invalid server key" });
+    if (!validServerKey(apiKey)) return reply.code(401).send({ code: "invalid_server", error: "Invalid server key" });
     const { ticket, serverId } = z.object({ ticket: z.string().min(20), serverId: z.string() }).parse(request.body);
     const result = await db.query(`with consumed as (
         update game_tickets set consumed_at=now()
@@ -38,7 +45,7 @@ export const gameRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/access/snapshot", async (request, reply) => {
     const apiKey = request.headers["x-server-key"];
-    if (apiKey !== config.GAME_SERVER_KEY) return reply.code(401).send({ code: "invalid_server", error: "Invalid server key" });
+    if (!validServerKey(apiKey)) return reply.code(401).send({ code: "invalid_server", error: "Invalid server key" });
     const { serverId, uuids } = z.object({
       serverId: z.string().min(1).max(64),
       uuids: z.array(z.string().uuid()).max(200),

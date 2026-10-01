@@ -19,6 +19,8 @@ const schema = z.object({
   PACK_SUBTITLE: z.string().default("Minecraft 1.21.1 · NeoForge 21.1.252"),
   MINECRAFT_ADDRESS: z.string().default("play.rarenetwork.ru:25565"),
   MINECRAFT_STATUS_ADDRESS: z.preprocess(emptyAsUndefined, z.string().min(1).optional()),
+  CSS_ADDRESS: z.string().default("play.rarenetwork.ru:27015"),
+  CSS_STATUS_ADDRESS: z.preprocess(emptyAsUndefined, z.string().min(1).default("192.168.1.118:27015")),
   PTERODACTYL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   PTERODACTYL_API_KEY: z.preprocess(emptyAsUndefined, z.string().min(20).optional()),
   PTERODACTYL_SERVER_ID: z.preprocess(emptyAsUndefined, z.string().regex(/^[a-z0-9-]+$/i).optional()),

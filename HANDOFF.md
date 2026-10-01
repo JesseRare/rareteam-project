@@ -17,6 +17,7 @@ rareteam is a custom game-platform stack. The active game is Minecraft server **
 - **Launcher:** Electron/React desktop app. Account auth, signed pack sync, Java 21 bootstrap, one-use game ticket, Minecraft launch, launcher self-update.
 - **Backend:** Fastify/PostgreSQL. Accounts, rotating sessions, profiles, signed artifact manifests, game tickets, cosmetics, dynamic roles, bans, audit log, LAN control panel and launcher release feeds.
 - **Minecraft integration:** NeoForge mod `rare-auth` runs on client and server. It consumes game tickets, receives live access snapshots, enforces bans and renders the custom TAB overlay.
+- **CSS v34 integration:** `survival-jim-css` exposes live A2S status and launches a user-provided base client with the RareTeam-owned menu/theme layer. No Valve binaries are stored in Git.
 - **Central access model:** role definitions, assignments and bans are global by default and can be scoped to a server. Only the Minecraft adapter exists today; the data model is intended for other games later.
 
 Main public endpoints:
@@ -240,8 +241,8 @@ Actual end-user verification still needed:
 
 Priority order:
 
-1. Add the three `production` GitHub secrets documented in `deploy/PTERODACTYL.md` and verify the first automatic backend deployment.
-2. Verify the first automatic `0.3.<run number>` GitHub launcher release and all three update metadata endpoints.
+1. Test the first Survival Jim CSS v34 client launch on Windows using a clean base client directory.
+2. Build the SourceMod/Metamod authentication adapter for RareTeam roles and bans.
 3. Migrate Windows users from the extracted portable build to the NSIS installer once; later versions can auto-update.
 4. Sign/notarize macOS builds and Authenticode-sign Windows builds.
 5. Add real server metrics/history (TPS, MSPT, memory, uptime) to the control dashboard.

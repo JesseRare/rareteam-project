@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
@@ -7,6 +7,8 @@ import { activeBan, allows, audit, loadAccess, PERMISSIONS, requirePermission } 
 import { config } from "../config.js";
 import { db } from "../db.js";
 import { controlPanelHtml } from "../control-panel.js";
+import { queryMinecraft } from "../minecraft-status.js";
+import { querySource } from "../source-status.js";
 
 const roleInput = z.object({
   name: z.string().trim().min(1).max(64),
@@ -50,15 +52,16 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
     if (!privateAddress) return reply.code(404).send({ code: "not_found", error: "Not found" });
   });
 
-  app.get("/", async (_request, reply) =>
-    reply
+  app.get("/", async (_request, reply) => {
+    const nonce = randomBytes(18).toString("base64");
+    return reply
       .header(
         "Content-Security-Policy",
-        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; script-src-attr 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'",
+        `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'nonce-${nonce}'; script-src-attr 'none'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'`,
       )
       .type("text/html; charset=utf-8")
-      .send(controlPanelHtml()),
-  );
+      .send(controlPanelHtml(nonce));
+  });
 
   app.get("/api/session", { onRequest: [app.authenticate] }, async (request) => {
     const access = await loadAccess(request.user.sub);
@@ -78,7 +81,19 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
         (select count(*)::int from role_definitions) roles,
         (select count(*)::int from refresh_sessions where revoked_at is null and expires_at>now()) active_sessions
     `);
-    return result.rows[0];
+    const [minecraft, source] = await Promise.all([
+      queryMinecraft(config.MINECRAFT_STATUS_ADDRESS ?? config.MINECRAFT_ADDRESS),
+      querySource(config.CSS_STATUS_ADDRESS ?? config.CSS_ADDRESS),
+    ]);
+    return {
+      ...result.rows[0],
+      uptimeSeconds: Math.floor(process.uptime()),
+      memoryMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+      servers: [
+        { id: "melchior-1", name: "Мельхиор-1", ...minecraft },
+        { id: "survival-jim-css", name: "Survival Jim CSS v34", ...source },
+      ],
+    };
   });
 
   app.get("/api/roles", { onRequest: [requirePermission("roles.view")] }, async () => {
@@ -157,6 +172,10 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
     }
     const buffer = await upload.toBuffer();
     if (buffer.length > 256 * 1024) throw Object.assign(new Error("Значок должен быть меньше 256 КБ"), { statusCode: 400 });
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    if (buffer.length < pngSignature.length || !buffer.subarray(0, pngSignature.length).equals(pngSignature)) {
+      throw Object.assign(new Error("Файл не является PNG"), { statusCode: 400 });
+    }
     const extension = "png";
     const hash = createHash("sha256").update(buffer).digest("hex");
     const key = `role-icons/${hash}.${extension}`;
