@@ -1,6 +1,7 @@
 export {};
 
 import type { SyncProgress, SyncResult } from "../electron/sync";
+import type { UpdateState } from "../electron/updater";
 
 declare global {
   interface Window {
@@ -16,6 +17,10 @@ declare global {
       saveSettings(value: Partial<{ memoryMb: number; gameRoot: string }>): Promise<{ memoryMb: number; gameRoot: string }>;
       chooseGameDirectory(): Promise<{ memoryMb: number; gameRoot: string }>;
       launch(profileId: string, publicKeyPem: string, identity: { username: string; uuid: string; ticket: string; serverAddress: string }): Promise<{ pid: number }>;
+      getUpdateState(): Promise<UpdateState>;
+      checkForUpdates(): Promise<UpdateState>;
+      installUpdate(): Promise<void>;
+      onUpdateState(listener: (state: UpdateState) => void): () => void;
     };
   }
 }

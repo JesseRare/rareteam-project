@@ -5,6 +5,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 
 @Mod(RareAuthMod.MOD_ID)
 public final class RareAuthMod {
@@ -14,6 +17,13 @@ public final class RareAuthMod {
     public RareAuthMod(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(AuthNetwork::registerPayloads);
         modEventBus.addListener(AuthNetwork::registerConfigurationTask);
-        LOGGER.info("RareTeam Auth initialized");
+        NeoForge.EVENT_BUS.addListener(AccessRegistry::onLogin);
+        NeoForge.EVENT_BUS.addListener(AccessRegistry::onLogout);
+        NeoForge.EVENT_BUS.addListener(AccessRegistry::onTick);
+        NeoForge.EVENT_BUS.addListener(AccessRegistry::onTabName);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            NeoForge.EVENT_BUS.addListener(ClientTabOverlay::onRender);
+        }
+        LOGGER.info("rareteam Auth initialized");
     }
 }

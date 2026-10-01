@@ -5,6 +5,7 @@ import { db } from "../db.js";
 import { normalizeUsername, offlineMinecraftUuid, randomToken, tokenHash } from "../security.js";
 import { config } from "../config.js";
 import { randomUUID } from "node:crypto";
+import { loadAccess } from "../access.js";
 
 const credentials = z.object({ login: z.string().min(3).max(254), password: z.string().min(8).max(256) });
 const registration = z.object({
@@ -14,17 +15,23 @@ const registration = z.object({
 });
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
-  const publicUser = (user: { id: string; username: string; minecraft_uuid: string; roles: string[]; skin_key?: string; cape_key?: string; skin_model?: "classic" | "slim" }) => ({
-    id: user.id, username: user.username, uuid: user.minecraft_uuid, roles: user.roles,
-    skinUrl: user.skin_key ? `${config.PUBLIC_URL}/artifacts/${user.skin_key}` : undefined,
-    capeUrl: user.cape_key ? `${config.PUBLIC_URL}/artifacts/${user.cape_key}` : undefined,
-    skinModel: user.skin_model ?? "classic",
-  });
+  const publicUser = async (user: { id: string; username: string; minecraft_uuid: string; roles: string[]; skin_key?: string; cape_key?: string; skin_model?: "classic" | "slim" }) => {
+    const access = await loadAccess(user.id);
+    return {
+      id: user.id, username: user.username, uuid: user.minecraft_uuid, roles: user.roles,
+      roleAssignments: access.roles.map((role) => ({
+        id: role.id, name: role.name, color: role.color, iconUrl: role.iconUrl, position: role.position,
+      })),
+      skinUrl: user.skin_key ? `${config.PUBLIC_URL}/artifacts/${user.skin_key}` : undefined,
+      capeUrl: user.cape_key ? `${config.PUBLIC_URL}/artifacts/${user.cape_key}` : undefined,
+      skinModel: user.skin_model ?? "classic",
+    };
+  };
   async function issue(user: { id: string; username: string; minecraft_uuid: string; roles: string[]; skin_key?: string; cape_key?: string; skin_model?: "classic" | "slim" }) {
     const accessToken = await app.jwt.sign({ sub: user.id, username: user.username, roles: user.roles }, { expiresIn: "15m" });
     const refreshToken = randomToken(48);
     await db.query("insert into refresh_sessions(id,user_id,token_hash,expires_at) values($1,$2,$3,now()+interval '30 days')", [randomUUID(), user.id, tokenHash(refreshToken)]);
-    return { accessToken, refreshToken, expiresIn: 900, user: publicUser(user) };
+    return { accessToken, refreshToken, expiresIn: 900, user: await publicUser(user) };
   }
 
   app.post("/register", { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } }, async (request, reply) => {

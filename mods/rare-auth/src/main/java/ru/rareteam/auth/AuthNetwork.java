@@ -23,6 +23,10 @@ public final class AuthNetwork {
                 AuthTicketPayload.TYPE,
                 AuthTicketPayload.STREAM_CODEC,
                 AuthNetwork::handleAuthTicket);
+        registrar.playToClient(
+                TabStatePayload.TYPE,
+                TabStatePayload.STREAM_CODEC,
+                AuthNetwork::handleTabState);
     }
 
     public static void registerConfigurationTask(RegisterConfigurationTasksEvent event) {
@@ -32,7 +36,7 @@ public final class AuthNetwork {
     private static void handleAuthRequest(AuthRequestPayload payload, IPayloadContext context) {
         String ticket = System.getenv("RARE_GAME_TICKET");
         if (ticket == null || ticket.isBlank()) {
-            context.disconnect(Component.literal("RareTeam authorization ticket is missing. Start the game from RareLauncher."));
+            context.disconnect(Component.literal("rareteam authorization ticket is missing. Start the game from the rareteam launcher."));
             return;
         }
         context.reply(new AuthTicketPayload(ticket));
@@ -40,7 +44,7 @@ public final class AuthNetwork {
 
     private static void handleAuthTicket(AuthTicketPayload payload, IPayloadContext context) {
         if (!(context.listener() instanceof ServerCommonPacketListenerImpl listener)) {
-            context.disconnect(Component.literal("RareTeam authorization failed: invalid connection state."));
+            context.disconnect(Component.literal("rareteam authorization failed: invalid connection state."));
             return;
         }
 
@@ -51,18 +55,23 @@ public final class AuthNetwork {
                         Throwable cause = error instanceof CompletionException && error.getCause() != null
                                 ? error.getCause()
                                 : error;
-                        RareAuthMod.LOGGER.warn("RareTeam authentication failed for {}: {}", profile.getName(), cause.getMessage());
-                        context.disconnect(Component.literal("RareTeam authorization failed. Restart the game from RareLauncher."));
+                        RareAuthMod.LOGGER.warn("rareteam authentication failed for {}: {}", profile.getName(), cause.getMessage());
+                        context.disconnect(Component.literal("rareteam authorization failed. Restart the game from the rareteam launcher."));
                         return;
                     }
                     if (!profile.getName().equalsIgnoreCase(result.username())
                             || !profile.getId().equals(result.minecraftUuid())) {
-                        RareAuthMod.LOGGER.warn("RareTeam ticket identity mismatch for {}", profile.getName());
-                        context.disconnect(Component.literal("RareTeam authorization failed: player identity mismatch."));
+                        RareAuthMod.LOGGER.warn("rareteam ticket identity mismatch for {}", profile.getName());
+                        context.disconnect(Component.literal("rareteam authorization failed: player identity mismatch."));
                         return;
                     }
-                    RareAuthMod.LOGGER.info("RareTeam authenticated {}", profile.getName());
+                    AccessRegistry.authenticate(result.minecraftUuid(), result.username(), result.roles());
+                    RareAuthMod.LOGGER.info("rareteam authenticated {}", profile.getName());
                     context.finishCurrentTask(AuthConfigurationTask.TYPE);
                 }));
+    }
+
+    private static void handleTabState(TabStatePayload payload, IPayloadContext context) {
+        ClientAccessState.update(payload.json());
     }
 }

@@ -1,11 +1,20 @@
 export type ReleaseChannel = "stable" | "beta";
 export type ManagedFileKind = "required" | "optional" | "mutable";
 
+export interface LauncherRole {
+  id: string;
+  name: string;
+  color: string;
+  iconUrl?: string;
+  position: number;
+}
+
 export interface LauncherUser {
   id: string;
   username: string;
   uuid: string;
   roles: string[];
+  roleAssignments?: LauncherRole[];
   skinUrl?: string;
   capeUrl?: string;
   skinModel: "classic" | "slim";

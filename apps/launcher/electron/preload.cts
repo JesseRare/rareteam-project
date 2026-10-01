@@ -16,4 +16,12 @@ contextBridge.exposeInMainWorld("rare", {
   saveSettings: (value: unknown) => ipcRenderer.invoke("settings:set", value),
   chooseGameDirectory: () => ipcRenderer.invoke("settings:choose-directory"),
   launch: (profileId: string, publicKeyPem: string, identity: { username: string; uuid: string; ticket: string; serverAddress: string }) => ipcRenderer.invoke("game:launch", profileId, publicKeyPem, identity),
+  getUpdateState: () => ipcRenderer.invoke("update:get-state"),
+  checkForUpdates: () => ipcRenderer.invoke("update:check"),
+  installUpdate: () => ipcRenderer.invoke("update:install"),
+  onUpdateState: (listener: (state: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: unknown) => listener(state);
+    ipcRenderer.on("update:state", handler);
+    return () => ipcRenderer.removeListener("update:state", handler);
+  },
 });

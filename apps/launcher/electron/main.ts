@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { synchronize } from "./sync.js";
 import { launchMinecraft } from "./launch.js";
+import { configureUpdater } from "./updater.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 type LauncherSettings = { memoryMb: number; gameRoot: string };
@@ -43,6 +44,7 @@ function createWindow() {
     if (url.startsWith("https://")) void shell.openExternal(url);
     return { action: "deny" };
   });
+  configureUpdater(window);
 }
 
 app.whenReady().then(() => {

@@ -2,6 +2,10 @@ package ru.rareteam.auth;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -60,8 +64,56 @@ public final class AuthService {
                     JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
                     String username = requiredString(json, "username");
                     UUID minecraftUuid = UUID.fromString(requiredString(json, "minecraft_uuid"));
-                    return new AuthResult(username, minecraftUuid);
+                    List<Role> roles = parseRoles(json.has("access") ? json.getAsJsonObject("access").getAsJsonArray("roles") : null);
+                    return new AuthResult(username, minecraftUuid, roles);
                 });
+    }
+
+    public static CompletableFuture<List<PlayerAccess>> fetchSnapshot(Collection<UUID> uuids) {
+        if (!isConfigured() || uuids.isEmpty()) return CompletableFuture.completedFuture(List.of());
+        JsonObject body = new JsonObject();
+        body.addProperty("serverId", SERVER_ID);
+        JsonArray values = new JsonArray();
+        uuids.forEach(uuid -> values.add(uuid.toString()));
+        body.add("uuids", values);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(trimTrailingSlash(BACKEND_URL) + "/v1/game/access/snapshot"))
+                .timeout(Duration.ofSeconds(8))
+                .header("content-type", "application/json")
+                .header("x-server-key", SERVER_KEY)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .build();
+        return HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
+            if (response.statusCode() != 200) throw new AuthException("Access snapshot was rejected");
+            JsonArray players = JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("players");
+            List<PlayerAccess> result = new ArrayList<>();
+            for (var element : players) {
+                JsonObject player = element.getAsJsonObject();
+                result.add(new PlayerAccess(
+                        requiredString(player, "username"),
+                        UUID.fromString(requiredString(player, "minecraftUuid")),
+                        player.has("banned") && player.get("banned").getAsBoolean(),
+                        player.has("banReason") && !player.get("banReason").isJsonNull() ? player.get("banReason").getAsString() : "",
+                        parseRoles(player.getAsJsonArray("roles"))));
+            }
+            return result;
+        });
+    }
+
+    private static List<Role> parseRoles(JsonArray values) {
+        if (values == null) return List.of();
+        List<Role> roles = new ArrayList<>();
+        for (var element : values) {
+            JsonObject role = element.getAsJsonObject();
+            roles.add(new Role(
+                    requiredString(role, "id"),
+                    requiredString(role, "name"),
+                    requiredString(role, "color"),
+                    role.has("iconUrl") && !role.get("iconUrl").isJsonNull() ? role.get("iconUrl").getAsString() : "",
+                    role.has("position") ? role.get("position").getAsInt() : 0,
+                    !role.has("displayInTab") || role.get("displayInTab").getAsBoolean()));
+        }
+        return List.copyOf(roles);
     }
 
     private static String requiredString(JsonObject json, String field) {
@@ -103,7 +155,11 @@ public final class AuthService {
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 
-    public record AuthResult(String username, UUID minecraftUuid) {}
+    public record Role(String id, String name, String color, String iconUrl, int position, boolean displayInTab) {}
+
+    public record AuthResult(String username, UUID minecraftUuid, List<Role> roles) {}
+
+    public record PlayerAccess(String username, UUID minecraftUuid, boolean banned, String banReason, List<Role> roles) {}
 
     public static final class AuthException extends RuntimeException {
         public AuthException(String message) {

@@ -1,6 +1,6 @@
 # RareLauncher
 
-Самописная платформа запуска и обновления Minecraft для RareTeam.
+Самописная платформа запуска и обновления Minecraft для rareteam.
 
 ## Состав
 

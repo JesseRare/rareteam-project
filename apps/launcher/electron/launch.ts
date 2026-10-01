@@ -55,7 +55,7 @@ function expand(value: string, identity: LaunchIdentity, installRoot: string, ve
     .replaceAll("${launcher_name}", "RareLauncher")
     .replaceAll("${launcher_version}", "0.1.4")
     .replaceAll("${user_type}", "mojang")
-    .replaceAll("${version_type}", "RareTeam")
+    .replaceAll("${version_type}", "rareteam")
     .replaceAll("${clientid}", "")
     .replaceAll("${auth_xuid}", "")
     .replaceAll("${server_host}", serverHost)
