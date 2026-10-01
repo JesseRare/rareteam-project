@@ -13,6 +13,7 @@ import { profileRoutes } from "./routes/profiles.js";
 import { startPackPublisher } from "./pack-publisher.js";
 import { cosmeticRoutes } from "./routes/cosmetics.js";
 import { controlRoutes } from "./routes/control.js";
+import { launcherReleaseRoutes } from "./routes/launcher-releases.js";
 import path from "node:path";
 
 const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 2 * 1024 * 1024 });
@@ -28,6 +29,7 @@ await app.register(multipart, { limits: { files: 1, fileSize: 2 * 1024 * 1024 } 
 app.decorate("authenticate", async (request, reply) => {
   try { await request.jwtVerify(); } catch { return reply.code(401).send({ code: "unauthorized", error: "Authentication required" }); }
 });
+await app.register(launcherReleaseRoutes);
 await app.register(staticFiles, { root: path.resolve(config.ARTIFACT_ROOT), prefix: "/artifacts/", immutable: true, maxAge: "1y" });
 await app.register(authRoutes, { prefix: "/v1/auth" });
 await app.register(gameRoutes, { prefix: "/v1/game" });
