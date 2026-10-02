@@ -8,6 +8,7 @@ suite("PostgreSQL security integration", () => {
   let db: (typeof import("../src/db.js"))["db"];
   let ownerAccessToken = "";
   let ownerRefreshToken = "";
+  let ownerUserId = "";
 
   beforeAll(async () => {
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -26,6 +27,7 @@ suite("PostgreSQL security integration", () => {
     const tokens = registration.json();
     ownerAccessToken = tokens.accessToken;
     ownerRefreshToken = tokens.refreshToken;
+    ownerUserId = tokens.user.id;
     await db.query(`insert into user_role_assignments(id,user_id,role_id,reason)
       values('10000000-0000-4000-8000-000000000099',$1,'00000000-0000-4000-8000-000000000001','integration owner')`, [tokens.user.id]);
   });
@@ -69,5 +71,101 @@ suite("PostgreSQL security integration", () => {
     const session = await app.inject({ method: "GET", url: "/control/api/session", headers: { cookie: String(cookie).split(";")[0] } });
     expect(session.statusCode).toBe(200);
     expect(session.json().user.username).toBe("jetarare");
+  });
+
+  it("enforces permission grants and role hierarchy for non-owner managers", async () => {
+    const registration = await app.inject({
+      method: "POST", url: "/v1/auth/register",
+      payload: { username: "rolemanager", email: "manager@example.test", password: "correct-horse-battery-staple" },
+    });
+    expect(registration.statusCode).toBe(201);
+    const manager = registration.json();
+    const managerRoleId = "20000000-0000-4000-8000-000000000001";
+    await db.query(`insert into role_definitions(id,slug,name,color,position,permissions,scopes,created_by)
+      values($1,'integration-manager','Integration manager','#123456',50,$2,'["global"]',$3)`,
+    [managerRoleId, JSON.stringify(["roles.view", "roles.manage", "roles.assign"]), ownerUserId]);
+    await db.query(`insert into user_role_assignments(id,user_id,role_id,granted_by,reason)
+      values('20000000-0000-4000-8000-000000000002',$1,$2,$3,'integration hierarchy test')`,
+    [manager.user.id, managerRoleId, ownerUserId]);
+
+    const equalPosition = await app.inject({
+      method: "POST", url: "/control/api/roles",
+      headers: { authorization: `Bearer ${manager.accessToken}` },
+      payload: { name: "Equal role", position: 50, permissions: [] },
+    });
+    expect(equalPosition.statusCode).toBe(403);
+    expect(equalPosition.json().code).toBe("role_hierarchy");
+
+    const excessivePermission = await app.inject({
+      method: "POST", url: "/control/api/roles",
+      headers: { authorization: `Bearer ${manager.accessToken}` },
+      payload: { name: "Excessive role", position: 40, permissions: ["users.edit"] },
+    });
+    expect(excessivePermission.statusCode).toBe(403);
+
+    const subordinate = await app.inject({
+      method: "POST", url: "/control/api/roles",
+      headers: { authorization: `Bearer ${manager.accessToken}` },
+      payload: { name: "Subordinate role", position: 40, permissions: ["roles.view"] },
+    });
+    expect(subordinate.statusCode).toBe(201);
+  });
+
+  it("requires a server for server bans and enforces server/global scope", async () => {
+    const registration = await app.inject({
+      method: "POST", url: "/v1/auth/register",
+      payload: { username: "bantarget", email: "ban-target@example.test", password: "correct-horse-battery-staple" },
+    });
+    expect(registration.statusCode).toBe(201);
+    const target = registration.json();
+
+    const missingServer = await app.inject({
+      method: "POST", url: `/control/api/users/${target.user.id}/bans`,
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+      payload: { scope: "server", reason: "Missing server must be rejected" },
+    });
+    expect(missingServer.statusCode).toBe(400);
+
+    const serverBan = await app.inject({
+      method: "POST", url: `/control/api/users/${target.user.id}/bans`,
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+      payload: { scope: "server", serverId: "melchior-1", reason: "Integration server ban" },
+    });
+    expect(serverBan.statusCode).toBe(201);
+
+    const blockedTicket = await app.inject({
+      method: "POST", url: "/v1/game/ticket",
+      headers: { authorization: `Bearer ${target.accessToken}` },
+      payload: { serverId: "melchior-1" },
+    });
+    expect(blockedTicket.statusCode).toBe(403);
+    expect(blockedTicket.json().code).toBe("banned");
+
+    const otherServerTicket = await app.inject({
+      method: "POST", url: "/v1/game/ticket",
+      headers: { authorization: `Bearer ${target.accessToken}` },
+      payload: { serverId: "survival-jim-css" },
+    });
+    expect(otherServerTicket.statusCode).toBe(200);
+
+    const revoke = await app.inject({
+      method: "DELETE", url: `/control/api/bans/${serverBan.json().id}`,
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+    });
+    expect(revoke.statusCode).toBe(204);
+    const globalBan = await app.inject({
+      method: "POST", url: `/control/api/users/${target.user.id}/bans`,
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+      payload: { scope: "global", reason: "Integration global ban" },
+    });
+    expect(globalBan.statusCode).toBe(201);
+
+    const globallyBlocked = await app.inject({
+      method: "POST", url: "/v1/game/ticket",
+      headers: { authorization: `Bearer ${target.accessToken}` },
+      payload: { serverId: "survival-jim-css" },
+    });
+    expect(globallyBlocked.statusCode).toBe(403);
+    expect(globallyBlocked.json().code).toBe("banned");
   });
 });

@@ -277,6 +277,9 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
       reason: z.string().trim().min(1).max(1000), evidenceUrl: z.string().url().nullable().optional(),
       expiresAt: z.string().datetime().nullable().optional(),
     }).parse(request.body);
+    if (input.scope === "server" && !input.serverId) {
+      return reply.code(400).send({ code: "invalid_request", error: "Для серверного бана требуется сервер" });
+    }
     const actor = await loadAccess(request.user.sub);
     if (input.scope === "global" && !allows(actor.permissions, "moderation.ban.global")) {
       return reply.code(403).send({ code: "forbidden", error: "Нет права на глобальный бан" });

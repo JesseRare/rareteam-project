@@ -1,6 +1,6 @@
 # HANDOFF — rareteam launcher platform
 
-**Updated:** 2026-10-01
+**Updated:** 2026-10-02
 
 **Repository:** `JesseRare/rareteam-project`
 
@@ -46,6 +46,7 @@ Implemented:
 - Role assignment with optional server scope and expiry.
 - Global/server bans with expiry and audit logging.
 - Bans revoke active refresh sessions; Minecraft polls access state and kicks newly banned users.
+- Server-scoped ban requests now require a non-empty server ID, preventing silently unenforced bans.
 - Exact username `jetarare` is idempotently assigned the system owner role (`*`) during backend migration.
 - Role icons are PNG only, maximum 256 KiB, because the Minecraft client decodes them directly.
 
@@ -222,8 +223,10 @@ At the latest handoff:
 - Launcher Vitest: 7 tests passed.
 - Launcher Vite build passed.
 - Backend TypeScript lint passed.
-- Backend Vitest passed.
+- Backend Vitest passed: 9 unit tests.
+- Backend PostgreSQL security integration suite passed: 5 tests covering refresh/game-ticket single use, admin cookies, role hierarchy/permission grants, and server/global ban enforcement.
 - Backend production build passed.
+- Launcher release-route tests cover architecture-specific metadata, upstream failures, safe redirects and nested-path rejection.
 - rare-auth 0.2.1 Gradle clean build passed; the JAR was deployed to all three required locations and verified in Minecraft logs and the public manifest.
 - Corrected macOS and Windows ZIP integrity tests passed.
 - Backend health and both macOS update YAML endpoints were verified after deployment.
@@ -247,7 +250,7 @@ Priority order:
 4. Sign/notarize macOS builds and Authenticode-sign Windows builds.
 5. Add real server metrics/history (TPS, MSPT, memory, uptime) to the control dashboard.
 6. Add adapters for future non-Minecraft game servers while reusing global roles/bans.
-7. Expand tests around role hierarchy, permission denial, bans and release metadata.
+7. Expand remaining control-panel tests around role icon uploads, assignment expiry and audit history.
 
 ## 9. Recent commits that explain current state
 
