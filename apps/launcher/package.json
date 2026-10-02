@@ -1,9 +1,9 @@
 {
   "name": "@rare/launcher",
   "version": "0.2.0",
-  "productName": "Melchior-1",
-  "description": "Официальный лаунчер Minecraft-проекта Мельхиор-1",
-  "author": "Rare Network",
+  "productName": "rareteam",
+  "description": "Единый игровой лаунчер rareteam",
+  "author": "rareteam",
   "private": true,
   "type": "module",
   "main": "dist-electron/electron/main.js",
@@ -37,8 +37,8 @@
   },
   "build": {
     "appId": "ru.rareteam.launcher",
-    "productName": "Melchior-1",
-    "executableName": "Melchior-1",
+    "productName": "rareteam",
+    "executableName": "rareteam",
     "directories": {
       "output": "release"
     },
@@ -75,20 +75,20 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "artifactName": "Melchior-1-${version}-Windows-Setup-${arch}.${ext}"
+      "artifactName": "rareteam-${version}-Windows-Setup-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "Melchior-1-${version}-Windows-Portable-${arch}.${ext}"
+      "artifactName": "rareteam-${version}-Windows-Portable-${arch}.${ext}"
     },
     "mac": {
       "target": "zip",
       "icon": "src/assets/logo.png",
-      "artifactName": "Melchior-1-${version}-macOS-${arch}.${ext}",
+      "artifactName": "rareteam-${version}-macOS-${arch}.${ext}",
       "category": "public.app-category.games"
     },
     "linux": {
       "icon": "src/assets/logo.png",
-      "artifactName": "Melchior-1-${version}-Linux-${arch}.${ext}"
+      "artifactName": "rareteam-${version}-Linux-${arch}.${ext}"
     }
   }
 }

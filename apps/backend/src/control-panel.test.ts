@@ -6,5 +6,8 @@ describe("control panel HTML", () => {
     const html = controlPanelHtml("test-nonce");
     expect(html).toContain('<script nonce="test-nonce">');
     expect(html).not.toMatch(/\sonclick=/i);
+    expect(html).toContain('data-page="announcements"');
+    expect(html).toContain("/control/api/announcements");
+    expect(html).toContain("image/png,image/jpeg,image/webp");
   });
 });

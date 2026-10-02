@@ -47,8 +47,20 @@ export async function restoreSession(): Promise<AuthTokens | null> {
   catch { await window.rare?.clearSession(); return null; }
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  summary: string;
+  imageUrl: string | null;
+  publishedAt: string;
+}
+
 export async function loadProfiles() {
   return parse<ServerProfile[]>(await request(`${apiUrl}/v1/profiles/`, { cache: "no-store" }));
+}
+
+export async function loadNews() {
+  return parse<Announcement[]>(await request(`${apiUrl}/v1/news/`, { cache: "no-store" }));
 }
 
 async function authorized<T>(session: AuthTokens, path: string, init: RequestInit): Promise<{ data: T; session: AuthTokens }> {

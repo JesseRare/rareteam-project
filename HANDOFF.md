@@ -14,10 +14,10 @@ This is the canonical concise handoff for humans and AI agents. Verify only fact
 
 rareteam is a custom game-platform stack. The active game is Minecraft server **Мельхиор-1**.
 
-- **Launcher:** Electron/React desktop app. Account auth, signed pack sync, Java 21 bootstrap, one-use game ticket, Minecraft launch, launcher self-update.
+- **Launcher:** Electron/React desktop app named `rareteam`. Account auth, news feed, signed pack sync, Java 21 bootstrap, one-use game ticket, Minecraft/CSS launch and self-update.
 - **Backend:** Fastify/PostgreSQL. Accounts, rotating sessions, profiles, signed artifact manifests, game tickets, cosmetics, dynamic roles, bans, audit log, LAN control panel and launcher release feeds.
 - **Minecraft integration:** NeoForge mod `rare-auth` runs on client and server. It consumes game tickets, receives live access snapshots, enforces bans and renders the custom TAB overlay.
-- **CSS v34 integration:** `survival-jim-css` exposes live A2S status and launches a user-provided base client with the RareTeam-owned menu/theme layer. No Valve binaries are stored in Git.
+- **CSS v34 integration:** `survival-jim-css` exposes live A2S status and launches a user-provided base client with the rareteam-owned menu/theme layer. No Valve binaries are stored in Git.
 - **Central access model:** role definitions, assignments and bans are global by default and can be scoped to a server. Only the Minecraft adapter exists today; the data model is intended for other games later.
 
 Main public endpoints:
@@ -70,6 +70,15 @@ Relevant files:
 - TAB now renders only while the player-list key is held; the old version canceled the vanilla layer every frame and therefore stayed visible continuously.
 - The 0.2.1 TAB is narrower and shorter, uses bordered column/row separators, and shows online users, primary role/icon, role ordering, colored ping, live TPS and available Minecraft JVM heap memory in the footer.
 
+### Launcher UX and news
+
+- Browsing the home page and server details is public; launching either Minecraft or CSS requires the same rareteam account.
+- Login/registration is available from the top account menu, home hero, Minecraft profile and both server launch actions.
+- The home page renders published news cards with optional PNG/JPEG/WebP images from `GET /v1/news/`.
+- The LAN control panel has a permission-protected **Новости** section for creating drafts, publishing, editing, deleting and uploading images.
+- Browser-like text selection and image dragging are disabled in the launcher UI; text remains selectable in form fields.
+- The redundant four-cell home status strip and the inactive home launch bar were removed.
+
 ### Launcher releases
 
 Manual baseline version: `0.2.0`. Automated releases use `0.3.<GitHub Actions run number>`.
@@ -93,6 +102,8 @@ Important release history:
   - `/artifacts/launcher/darwin-x64/latest-mac.yml`
 - Backend serves those YAML files and redirects ZIP downloads to the GitHub release from `apps/backend/src/routes/launcher-releases.ts`.
 - First installation of 0.2.0 is manual. Later checks run after 5 seconds and every 30 minutes.
+
+New automated releases use lowercase `rareteam` for the product, application/EXE, installer/archive filenames and release title. `Мельхиор-1` remains only the Minecraft server name. The 0.2.0 filenames below are historical.
 
 Known release limitations:
 
@@ -224,7 +235,7 @@ At the latest handoff:
 - Launcher Vite build passed.
 - Backend TypeScript lint passed.
 - Backend Vitest passed: 9 unit tests.
-- Backend PostgreSQL security integration suite passed: 5 tests covering refresh/game-ticket single use, admin cookies, role hierarchy/permission grants, and server/global ban enforcement.
+- Backend PostgreSQL security integration suite passed: 6 tests covering refresh/game-ticket single use, admin cookies, role hierarchy/permission grants, server/global ban enforcement, and news publication with an uploaded image.
 - Backend production build passed.
 - Launcher release-route tests cover architecture-specific metadata, upstream failures, safe redirects and nested-path rejection.
 - rare-auth 0.2.1 Gradle clean build passed; the JAR was deployed to all three required locations and verified in Minecraft logs and the public manifest.

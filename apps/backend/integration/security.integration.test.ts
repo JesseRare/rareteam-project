@@ -73,6 +73,47 @@ suite("PostgreSQL security integration", () => {
     expect(session.json().user.username).toBe("jetarare");
   });
 
+  it("publishes launcher news with a validated image", async () => {
+    const created = await app.inject({
+      method: "POST", url: "/control/api/announcements",
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+      payload: { title: "Integration news", summary: "Visible in the launcher after publication", published: false },
+    });
+    expect(created.statusCode).toBe(201);
+    const announcementId = created.json().id;
+
+    const draftFeed = await app.inject({ method: "GET", url: "/v1/news/" });
+    expect(draftFeed.json()).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: announcementId })]));
+
+    const boundary = "rareteam-news-test";
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const multipart = Buffer.concat([
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="news.png"\r\nContent-Type: image/png\r\n\r\n`),
+      png,
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+    const image = await app.inject({
+      method: "POST", url: `/control/api/announcements/${announcementId}/image`,
+      headers: { authorization: `Bearer ${ownerAccessToken}`, "content-type": `multipart/form-data; boundary=${boundary}` },
+      payload: multipart,
+    });
+    expect(image.statusCode).toBe(200);
+    expect(image.json().imageUrl).toMatch(/\/artifacts\/news\/[a-f0-9]{64}\.png$/);
+
+    const published = await app.inject({
+      method: "PATCH", url: `/control/api/announcements/${announcementId}`,
+      headers: { authorization: `Bearer ${ownerAccessToken}` },
+      payload: { published: true },
+    });
+    expect(published.statusCode).toBe(204);
+
+    const feed = await app.inject({ method: "GET", url: "/v1/news/" });
+    expect(feed.statusCode).toBe(200);
+    expect(feed.json()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: announcementId, title: "Integration news", imageUrl: image.json().imageUrl }),
+    ]));
+  });
+
   it("enforces permission grants and role hierarchy for non-owner managers", async () => {
     const registration = await app.inject({
       method: "POST", url: "/v1/auth/register",

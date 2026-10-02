@@ -79,6 +79,12 @@ export async function migrate() {
       mandatory boolean not null default false, published_at timestamptz not null default now(),
       unique(version, platform, arch, channel)
     );
+    create table if not exists announcements (
+      id uuid primary key, title varchar(120) not null, summary text not null,
+      image_key text, published boolean not null default false, published_at timestamptz,
+      created_by uuid references users(id) on delete set null,
+      created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+    );
     insert into role_definitions(id,slug,name,color,position,permissions,scopes,display_in_tab,is_system)
     values(
       '00000000-0000-4000-8000-000000000001','owner','Владелец','#f5c542',100000,
@@ -94,5 +100,6 @@ export async function migrate() {
     create index if not exists user_role_assignments_user_idx on user_role_assignments(user_id);
     create index if not exists bans_user_idx on bans(user_id);
     create index if not exists audit_log_created_idx on audit_log(created_at desc);
+    create index if not exists announcements_published_idx on announcements(published,published_at desc);
   `);
 }

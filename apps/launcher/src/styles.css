@@ -12,7 +12,9 @@
   --panel: rgba(10, 20, 30, .78);
   --line: rgba(139, 220, 255, .14);
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+input, textarea { user-select: text; -webkit-user-select: text; }
+img { -webkit-user-drag: none; }
 html, body, #root { width: 100%; height: 100%; }
 body { margin: 0; overflow: hidden; background: #05080d; }
 button, input, select { font: inherit; }
@@ -80,7 +82,7 @@ button { color: inherit; }
 .window-actions button:last-child:hover { background: rgba(255,83,78,.18); color: #ff8a84; }
 .window-actions svg { width: 16px; }
 .content { position: relative; z-index: 2; height: calc(100% - 168px); padding: 22px; gap: 16px; display: grid; }
-.content.home-selected { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(235px, 1fr) 68px auto; }
+.content.home-selected { height: calc(100% - 72px); display: block; overflow: hidden; padding: 18px 22px 22px; }
 .content.server-selected { grid-template-columns: 224px minmax(0,1fr); grid-template-rows: minmax(0,1fr); }
 .content.server-selected.css-selected { grid-template-columns: minmax(0,1fr); }
 .css-selected .build-panel { padding-right: min(42vw, 480px); }
@@ -95,7 +97,7 @@ button { color: inherit; }
   font-weight: 900;
   letter-spacing: -12px;
 }
-.hero { position: relative; min-height: 0; overflow: hidden; border-radius: 14px; padding: 38px 44px; display: flex; align-items: center; }
+.hero { position: relative; min-height: 245px; overflow: hidden; border-radius: 14px; padding: 32px 40px; display: flex; align-items: center; }
 .hero:before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(4,13,21,.88) 0%, rgba(7,20,31,.58) 58%, transparent); }
 .hero-copy { position: relative; z-index: 2; }
 .eyebrow, .unit { color: var(--orange); font: 700 9px Consolas, monospace; letter-spacing: 2.7px; }

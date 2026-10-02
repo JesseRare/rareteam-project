@@ -94,11 +94,11 @@ jobs:
           if (-not $installer) { throw "Windows NSIS installer was not produced" }
           $install = Start-Process -FilePath $installer.FullName -ArgumentList "/S" -Wait -PassThru
           if ($install.ExitCode -ne 0) { throw "NSIS installer exited with code $($install.ExitCode)" }
-          $exe = Get-ChildItem "$env:LOCALAPPDATA/Programs" -Filter "Melchior-1.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { throw "Installed Melchior-1.exe was not found" }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA/Programs" -Filter "rareteam.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw "Installed rareteam.exe was not found" }
           $process = Start-Process -FilePath $exe.FullName -ArgumentList "--disable-gpu" -PassThru
           Start-Sleep -Seconds 20
-          if ($process.HasExited) { throw "Melchior-1 exited during startup with code $($process.ExitCode)" }
+          if ($process.HasExited) { throw "rareteam exited during startup with code $($process.ExitCode)" }
           $runtimeConfig = Get-ChildItem "$env:APPDATA" -Filter "app-update.yml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $runtimeConfig) { throw "Runtime app-update.yml was not created" }
           Stop-Process -Id $process.Id -Force
@@ -129,4 +129,4 @@ jobs:
           set -euo pipefail
           VERSION="${VERSION_SERIES}.${GITHUB_RUN_NUMBER}"
           TAG="v${VERSION}"
-          gh release create "$TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --title "Melchior-1 ${VERSION}" --notes "Автоматическая production-сборка из commit ${GITHUB_SHA}." --latest
+          gh release create "$TAG" release-assets/* --repo "$GITHUB_REPOSITORY" --title "rareteam ${VERSION}" --notes "Автоматическая production-сборка из commit ${GITHUB_SHA}." --latest

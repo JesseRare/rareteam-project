@@ -53,11 +53,11 @@ describe("launcher release routes", () => {
 
     const valid = await app.inject({
       method: "GET",
-      url: "/artifacts/launcher/win32-x64/Melchior-1-0.3.9-Windows-Setup-x64.exe",
+      url: "/artifacts/launcher/win32-x64/rareteam-0.3.9-Windows-Setup-x64.exe",
     });
     expect(valid.statusCode).toBe(302);
     expect(valid.headers.location).toBe(
-      "https://github.com/JesseRare/rareteam-project/releases/latest/download/Melchior-1-0.3.9-Windows-Setup-x64.exe",
+      "https://github.com/JesseRare/rareteam-project/releases/latest/download/rareteam-0.3.9-Windows-Setup-x64.exe",
     );
 
     const invalid = await app.inject({

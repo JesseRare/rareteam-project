@@ -23,6 +23,19 @@ const roleInput = z.object({
 
 const patchRoleInput = roleInput.partial();
 
+const announcementInput = z.object({
+  title: z.string().trim().min(1).max(120),
+  summary: z.string().trim().min(1).max(4000),
+  published: z.boolean().default(false),
+});
+
+function imageExtension(buffer: Buffer, mimetype: string) {
+  if (mimetype === "image/png" && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "png";
+  if (mimetype === "image/jpeg" && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "jpg";
+  if (mimetype === "image/webp" && buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") return "webp";
+  return null;
+}
+
 function slugify(value: string) {
   const normalized = value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return normalized || `role-${randomUUID().slice(0, 8)}`;
@@ -299,6 +312,76 @@ export const controlRoutes: FastifyPluginAsync = async (app) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     await db.query("update bans set revoked_at=now(),revoked_by=$1 where id=$2 and revoked_at is null", [request.user.sub, id]);
     await audit(request.user.sub, "ban.revoke", id);
+    return reply.code(204).send();
+  });
+
+  app.get("/api/announcements", { onRequest: [requirePermission("content.announcements")] }, async () => {
+    const result = await db.query(`
+      select id,title,summary,image_key,published,published_at,created_at,updated_at
+      from announcements order by created_at desc
+    `);
+    return result.rows.map((row) => ({
+      id: row.id, title: row.title, summary: row.summary, published: row.published,
+      imageUrl: row.image_key ? `${config.PUBLIC_URL}/artifacts/${row.image_key}` : null,
+      publishedAt: row.published_at, createdAt: row.created_at, updatedAt: row.updated_at,
+    }));
+  });
+
+  app.post("/api/announcements", { onRequest: [requirePermission("content.announcements")] }, async (request, reply) => {
+    const input = announcementInput.parse(request.body);
+    const id = randomUUID();
+    await db.query(`
+      insert into announcements(id,title,summary,published,published_at,created_by)
+      values($1,$2,$3,$4,case when $4 then now() else null end,$5)
+    `, [id, input.title, input.summary, input.published, request.user.sub]);
+    await audit(request.user.sub, "announcement.create", id, { title: input.title, published: input.published });
+    return reply.code(201).send({ id });
+  });
+
+  app.patch("/api/announcements/:id", { onRequest: [requirePermission("content.announcements")] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const input = announcementInput.partial().parse(request.body);
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    const put = (column: string, value: unknown) => { values.push(value); fields.push(`${column}=$${values.length}`); };
+    if (input.title !== undefined) put("title", input.title);
+    if (input.summary !== undefined) put("summary", input.summary);
+    if (input.published !== undefined) {
+      put("published", input.published);
+      values.push(input.published);
+      fields.push(`published_at=case when $${values.length} then coalesce(published_at,now()) else null end`);
+    }
+    if (!fields.length) return reply.code(204).send();
+    values.push(id);
+    const updated = await db.query(`update announcements set ${fields.join(",")},updated_at=now() where id=$${values.length}`, values);
+    if (!updated.rowCount) return reply.code(404).send({ code: "not_found", error: "Новость не найдена" });
+    await audit(request.user.sub, "announcement.update", id, input);
+    return reply.code(204).send();
+  });
+
+  app.post("/api/announcements/:id/image", { onRequest: [requirePermission("content.announcements")] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const upload = await request.file();
+    if (!upload) return reply.code(400).send({ code: "invalid_request", error: "Изображение не передано" });
+    const buffer = await upload.toBuffer();
+    const extension = imageExtension(buffer, upload.mimetype);
+    if (!extension) return reply.code(400).send({ code: "invalid_request", error: "Поддерживаются PNG, JPEG и WebP" });
+    if (buffer.length > 2 * 1024 * 1024) return reply.code(400).send({ code: "invalid_request", error: "Изображение должно быть меньше 2 МБ" });
+    const hash = createHash("sha256").update(buffer).digest("hex");
+    const key = `news/${hash}.${extension}`;
+    const target = path.resolve(config.ARTIFACT_ROOT, key);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, buffer, { mode: 0o644 });
+    const updated = await db.query("update announcements set image_key=$1,updated_at=now() where id=$2", [key, id]);
+    if (!updated.rowCount) return reply.code(404).send({ code: "not_found", error: "Новость не найдена" });
+    await audit(request.user.sub, "announcement.image", id, { key });
+    return { imageUrl: `${config.PUBLIC_URL}/artifacts/${key}` };
+  });
+
+  app.delete("/api/announcements/:id", { onRequest: [requirePermission("content.announcements")] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    await db.query("delete from announcements where id=$1", [id]);
+    await audit(request.user.sub, "announcement.delete", id);
     return reply.code(204).send();
   });
 

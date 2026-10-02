@@ -15,6 +15,7 @@ import { startPackPublisher } from "./pack-publisher.js";
 import { cosmeticRoutes } from "./routes/cosmetics.js";
 import { controlRoutes } from "./routes/control.js";
 import { launcherReleaseRoutes } from "./routes/launcher-releases.js";
+import { newsRoutes } from "./routes/news.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -46,6 +47,7 @@ export async function buildApp(options: { migrateDatabase?: boolean; startPublis
   await app.register(authRoutes, { prefix: "/v1/auth" });
   await app.register(gameRoutes, { prefix: "/v1/game" });
   await app.register(profileRoutes, { prefix: "/v1/profiles" });
+  await app.register(newsRoutes, { prefix: "/v1/news" });
   await app.register(cosmeticRoutes, { prefix: "/v1/cosmetics" });
   await app.register(controlRoutes, { prefix: "/control" });
   app.get("/health", async () => ({ ok: true, service: "rare-launcher-api" }));

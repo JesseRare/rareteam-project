@@ -35,4 +35,4 @@ process launch, uploads, deployment workflows and production dependencies.
 - Add integration tests with PostgreSQL for auth races, role hierarchy and bans.
 - Replace the self-signed RareTeam Development Authenticode certificate with a CA-issued production certificate.
 - Add Apple Developer ID signing and notarization; no Apple developer account is currently available.
-- If CSS roles/bans are added later, map them to a verified Steam identity without making RareLauncher mandatory.
+- If CSS roles/bans are added later, map them to a verified Steam identity without making the rareteam launcher mandatory.

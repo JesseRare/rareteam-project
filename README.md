@@ -1,4 +1,4 @@
-# RareLauncher
+# rareteam
 
 Самописная платформа запуска и обновления Minecraft для rareteam.
 

@@ -52,7 +52,7 @@ function expand(value: string, identity: LaunchIdentity, installRoot: string, ve
     .replaceAll("${auth_access_token}", identity.ticket)
     .replaceAll("${version_name}", versionName)
     .replaceAll("${assets_index_name}", "17")
-    .replaceAll("${launcher_name}", "RareLauncher")
+    .replaceAll("${launcher_name}", "rareteam")
     .replaceAll("${launcher_version}", "0.1.4")
     .replaceAll("${user_type}", "mojang")
     .replaceAll("${version_type}", "rareteam")

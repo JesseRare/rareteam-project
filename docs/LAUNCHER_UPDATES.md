@@ -24,8 +24,12 @@ https://launcher-api.rarenetwork.ru/artifacts/launcher/win32-x64/
 
 ## Файлы публикации
 
-- Windows: NSIS-инсталлятор, blockmap и `latest.yml`;
-- macOS: ZIP, blockmap и `latest-mac.yml`.
+Продукт, исполняемый файл и новые артефакты называются `rareteam`:
+
+- Windows: `rareteam-<version>-Windows-Setup-x64.exe`, portable EXE, blockmap и `latest.yml`;
+- macOS: `rareteam-<version>-macOS-<arch>.zip`, blockmap и `latest-mac.yml`.
+
+«Мельхиор-1» — название Minecraft-сервера, а не лаунчера.
 
 Workflow `.github/workflows/launcher-release.yml` запускается после каждого push
 в `main`, присваивает сборке версию `0.3.<GITHUB_RUN_NUMBER>`, собирает macOS
