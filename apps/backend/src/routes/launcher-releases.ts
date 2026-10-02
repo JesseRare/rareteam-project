@@ -19,11 +19,16 @@ const channels = [
     publicMetadata: "latest.yml",
     releaseMetadata: "latest-win32-x64.yml",
   },
+  {
+    prefix: "/artifacts/launcher/win32-x64",
+    publicMetadata: "latest-portable.json",
+    releaseMetadata: "latest-portable.json",
+  },
 ] as const;
 
 async function loadReleaseMetadata(filename: string) {
   const response = await fetch(`${githubLatestBase}/${filename}`, {
-    headers: { accept: "text/yaml", "cache-control": "no-cache" },
+    headers: { accept: filename.endsWith(".json") ? "application/json" : "text/yaml", "cache-control": "no-cache" },
     redirect: "follow",
     signal: AbortSignal.timeout(15_000),
   });
@@ -40,11 +45,13 @@ export const launcherReleaseRoutes: FastifyPluginAsync = async (app) => {
     app.get(`${channel.prefix}/${channel.publicMetadata}`, async (_request, reply) =>
       reply
         .header("Cache-Control", "no-cache, no-store, must-revalidate")
-        .type("text/yaml; charset=utf-8")
+        .type(channel.publicMetadata.endsWith(".json") ? "application/json; charset=utf-8" : "text/yaml; charset=utf-8")
         .send(await loadReleaseMetadata(channel.releaseMetadata)),
     );
+  }
 
-    app.get<{ Params: { "*": string } }>(`${channel.prefix}/*`, async (request, reply) => {
+  for (const prefix of new Set(channels.map((channel) => channel.prefix))) {
+    app.get<{ Params: { "*": string } }>(`${prefix}/*`, async (request, reply) => {
       const filename = request.params["*"];
       if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(filename)) {
         return reply.code(404).send({ code: "not_found", error: "Not found" });

@@ -50,6 +50,8 @@
       "dist-electron/electron/runtime.js",
       "dist-electron/electron/sync.js",
       "dist-electron/electron/updater.js",
+      "dist-electron/electron/portable-updater.js",
+      "dist-electron/electron/updater-cache.js",
       "dist-electron/electron/source.js"
     ],
     "publish": [

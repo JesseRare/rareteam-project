@@ -11,6 +11,7 @@ describe("launcher release routes", () => {
     ["/artifacts/launcher/darwin-arm64/latest-mac.yml", "latest-mac-arm64.yml"],
     ["/artifacts/launcher/darwin-x64/latest-mac.yml", "latest-mac-x64.yml"],
     ["/artifacts/launcher/win32-x64/latest.yml", "latest-win32-x64.yml"],
+    ["/artifacts/launcher/win32-x64/latest-portable.json", "latest-portable.json"],
   ])("maps %s to architecture-specific metadata", async (url, releaseFilename) => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("version: 0.3.9\n", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -20,13 +21,13 @@ describe("launcher release routes", () => {
     const response = await app.inject({ method: "GET", url });
 
     expect(response.statusCode).toBe(200);
-    expect(response.headers["content-type"]).toContain("text/yaml");
+    expect(response.headers["content-type"]).toContain(url.endsWith(".json") ? "application/json" : "text/yaml");
     expect(response.headers["cache-control"]).toBe("no-cache, no-store, must-revalidate");
     expect(response.body).toBe("version: 0.3.9\n");
     expect(fetchMock).toHaveBeenCalledWith(
       `https://github.com/JesseRare/rareteam-project/releases/latest/download/${releaseFilename}`,
       expect.objectContaining({
-        headers: { accept: "text/yaml", "cache-control": "no-cache" },
+        headers: { accept: releaseFilename.endsWith(".json") ? "application/json" : "text/yaml", "cache-control": "no-cache" },
         redirect: "follow",
       }),
     );

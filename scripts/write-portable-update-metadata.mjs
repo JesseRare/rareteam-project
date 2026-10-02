@@ -1,0 +1,11 @@
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { readdir, readFile, stat, writeFile } from "node:fs/promises";
+import path from "node:path";
+const releaseDir = path.resolve("apps/launcher/release");
+const packageJson = JSON.parse(await readFile("apps/launcher/package.json", "utf8"));
+const candidates = (await readdir(releaseDir)).filter((name) => /^rareteam-.*-Windows-Portable-x64\.exe$/.test(name));
+if (candidates.length !== 1) throw new Error(`Expected one rareteam portable EXE, found ${candidates.length}`);
+const filename = candidates[0]; const file = path.join(releaseDir, filename); const hash = createHash("sha512");
+for await (const chunk of createReadStream(file)) hash.update(chunk);
+await writeFile(path.join(releaseDir, "latest-portable.json"), `${JSON.stringify({ version: packageJson.version, url: filename, sha512: hash.digest("base64"), size: (await stat(file)).size }, null, 2)}\n`);

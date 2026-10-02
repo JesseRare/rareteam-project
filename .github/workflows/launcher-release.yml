@@ -72,6 +72,7 @@ jobs:
         run: |
           pnpm --filter @rare/launcher exec electron-builder --win nsis portable --x64 --publish never
           mv apps/launcher/release/latest.yml "apps/launcher/release/${{ matrix.metadata }}"
+          node scripts/write-portable-update-metadata.mjs
       - name: Verify Windows development signatures
         if: matrix.platform == 'win'
         shell: pwsh
@@ -111,6 +112,7 @@ jobs:
             apps/launcher/release/*.exe
             apps/launcher/release/*.blockmap
             apps/launcher/release/${{ matrix.metadata }}
+            apps/launcher/release/latest-portable.json
           if-no-files-found: error
           retention-days: 7
   publish:

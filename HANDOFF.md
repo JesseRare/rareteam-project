@@ -112,7 +112,9 @@ Known release limitations:
 - Reliable production macOS auto-install requires Apple Developer ID signing/notarization.
 - GitHub Actions now builds native Windows NSIS + portable artifacts and macOS arm64/x64 archives after every push to `main`.
 - Backend serves architecture-specific metadata from the latest GitHub Release, including `/artifacts/launcher/win32-x64/latest.yml`.
-- Existing Windows portable users need one manual migration to the NSIS installer before reliable in-place auto-updates.
+- Windows portable now has its own `latest-portable.json` channel, verifies size and SHA-512, replaces its own EXE after exit, and relaunches from the same path.
+- Existing portable builds from before this change require one manual download of the first self-updating portable release; later portable updates are in-place.
+- NSIS updates no longer auto-install on ordinary app exit. Stale pending installers are cleared at startup and before download, and same/older versions are rejected.
 
 Relevant files:
 
@@ -231,10 +233,10 @@ Never commit or expose:
 At the latest handoff:
 
 - Launcher TypeScript lint passed.
-- Launcher Vitest: 7 tests passed.
+- Launcher Vitest: 12 tests passed, including stale updater cache, portable metadata validation and version ordering.
 - Launcher Vite build passed.
 - Backend TypeScript lint passed.
-- Backend Vitest passed: 9 unit tests.
+- Backend Vitest passed: 10 unit tests.
 - Backend PostgreSQL security integration suite passed: 6 tests covering refresh/game-ticket single use, admin cookies, role hierarchy/permission grants, server/global ban enforcement, and news publication with an uploaded image.
 - Backend production build passed.
 - Launcher release-route tests cover architecture-specific metadata, upstream failures, safe redirects and nested-path rejection.
