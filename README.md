@@ -16,6 +16,7 @@
 - `packages/contracts` — общие типы API и форматы манифестов.
 - `deploy` — Docker/Pterodactyl-конфигурация.
 - `mods/rare-auth` — общий клиент-серверный мод проверки одноразового игрового билета.
+- `mods/css-fpv-drone` — SourceMod-плагин управляемого FPV-дрона для Survival Jim CSS v34.
 - `docs` — архитектура и карта совместимости с GravitLauncher.
 
 ## Разработка

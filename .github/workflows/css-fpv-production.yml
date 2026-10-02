@@ -1,0 +1,75 @@
+name: CSS FPV production
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mods/css-fpv-drone/**"
+      - ".github/workflows/css-fpv-production.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: css-fpv-production
+  cancel-in-progress: false
+jobs:
+  compile-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CSS_SERVER_ID: "2420d205"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile SourceMod plugin
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sourcemod build/css-fpv
+          archive="$(curl --fail --silent --show-error https://sm.alliedmods.net/smdrop/1.12/sourcemod-latest-linux)"
+          curl --fail --silent --show-error "https://sm.alliedmods.net/smdrop/1.12/${archive}" -o /tmp/sourcemod.tar.gz
+          tar -xzf /tmp/sourcemod.tar.gz -C /tmp/sourcemod
+          /tmp/sourcemod/addons/sourcemod/scripting/spcomp64 \
+            mods/css-fpv-drone/addons/sourcemod/scripting/rareteam_fpv_drone.sp \
+            -o build/css-fpv/rareteam_fpv_drone.smx
+      - name: Verify deployment secrets
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+        run: |
+          test -n "$PTERODACTYL_URL"
+          test -n "$PTERODACTYL_API_KEY"
+      - name: Upload plugin and configuration
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+        run: |
+          set -euo pipefail
+          api="${PTERODACTYL_URL%/}/api/client/servers/${CSS_SERVER_ID}"
+          auth="Authorization: Bearer ${PTERODACTYL_API_KEY}"
+          upload() {
+            local directory="$1" source="$2" filename="$3"
+            curl --fail --silent --show-error -H "$auth" -H "Accept: application/json" \
+              "$api/files/list?directory=${directory}" >/dev/null
+            upload_url="$(curl --fail --silent --show-error -H "$auth" -H "Accept: application/json" \
+              "$api/files/upload?directory=${directory}" | jq -er '.attributes.url')"
+            curl --fail --silent --show-error -F "files=@${source};filename=${filename}" "$upload_url"
+          }
+          upload "/cstrike/addons/sourcemod/plugins" "build/css-fpv/rareteam_fpv_drone.smx" "rareteam_fpv_drone.smx"
+          upload "/cstrike/cfg/sourcemod" "mods/css-fpv-drone/cfg/sourcemod/rareteam_fpv_drone.cfg" "rareteam_fpv_drone.cfg"
+      - name: Restart CSS server
+        env:
+          PTERODACTYL_URL: ${{ secrets.PTERODACTYL_URL }}
+          PTERODACTYL_API_KEY: ${{ secrets.PTERODACTYL_API_KEY }}
+        run: |
+          set -euo pipefail
+          api="${PTERODACTYL_URL%/}/api/client/servers/${CSS_SERVER_ID}"
+          auth="Authorization: Bearer ${PTERODACTYL_API_KEY}"
+          curl --fail --silent --show-error -X POST -H "$auth" -H "Accept: application/json" \
+            -H "Content-Type: application/json" --data '{"signal":"restart"}' "$api/power"
+          sleep 5
+          for attempt in $(seq 1 30); do
+            state="$(curl --fail --silent --show-error -H "$auth" -H "Accept: application/json" \
+              "$api/resources" | jq -r '.attributes.current_state')"
+            if [ "$state" = "running" ]; then exit 0; fi
+            sleep 5
+          done
+          echo "CSS server did not return to running state" >&2
+          exit 1

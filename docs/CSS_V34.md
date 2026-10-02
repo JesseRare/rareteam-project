@@ -31,3 +31,15 @@ The CSS server does not require rareteam launcher or a rareteam ticket. Players 
 connect directly from any compatible CSS v34 client. rareteam launcher is an
 optional convenience for installing the rareteam theme and opening the client.
 Minecraft ticket authentication remains separate and unchanged.
+
+
+## FPV drone server plugin
+
+`mods/css-fpv-drone` contains the SourceMod plugin `rareteam_fpv_drone.sp`.
+It provides a first-person controllable drone with WASD/mouse flight,
+vertical controls, health, lifetime, cooldown, collision, cancellation and an
+explosive attack. The player's body remains stationary and vulnerable.
+
+The plugin uses only a stock Source model and requires MetaMod:Source plus
+SourceMod 1.11 or newer with `sdktools` and `sdkhooks`. Installation and CVars
+are documented in `mods/css-fpv-drone/README.md`.

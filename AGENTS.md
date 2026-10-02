@@ -19,6 +19,7 @@ Read this file first, then `HANDOFF.md`. The handoff is the canonical current-st
 - `apps/backend` — Fastify + PostgreSQL API, control panel, artifacts, roles/bans, launcher release feeds.
 - `packages/contracts` — shared TypeScript contracts.
 - `mods/rare-auth` — NeoForge 1.21.1 client/server auth and TAB overlay mod.
+- `mods/css-fpv-drone` — SourceMod FPV attack-drone plugin for Survival Jim CSS v34.
 - `docs` — focused architecture/control/update documentation.
 - `deploy` — Docker/Pterodactyl deployment material.
 

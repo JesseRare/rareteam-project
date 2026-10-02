@@ -2,6 +2,13 @@ name: Backend production
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/backend/**"
+      - "packages/contracts/**"
+      - "deploy/**"
+      - "scripts/package-backend.mjs"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
   workflow_dispatch:
 permissions:
   contents: read

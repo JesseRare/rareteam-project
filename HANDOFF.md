@@ -17,7 +17,7 @@ rareteam is a custom game-platform stack. The active game is Minecraft server **
 - **Launcher:** Electron/React desktop app named `rareteam`. Account auth, news feed, signed pack sync, Java 21 bootstrap, one-use game ticket, Minecraft/CSS launch and self-update.
 - **Backend:** Fastify/PostgreSQL. Accounts, rotating sessions, profiles, signed artifact manifests, game tickets, cosmetics, dynamic roles, bans, audit log, LAN control panel and launcher release feeds.
 - **Minecraft integration:** NeoForge mod `rare-auth` runs on client and server. It consumes game tickets, receives live access snapshots, enforces bans and renders the custom TAB overlay.
-- **CSS v34 integration:** `survival-jim-css` exposes live A2S status and launches a user-provided base client with the rareteam-owned menu/theme layer. No Valve binaries are stored in Git.
+- **CSS v34 integration:** `survival-jim-css` exposes live A2S status and launches a user-provided base client with the rareteam-owned menu/theme layer. `mods/css-fpv-drone` adds a SourceMod FPV attack drone. No Valve binaries are stored in Git.
 - **Central access model:** role definitions, assignments and bans are global by default and can be scoped to a server. Only the Minecraft adapter exists today; the data model is intended for other games later.
 
 Main public endpoints:
@@ -122,6 +122,17 @@ Relevant files:
 - `apps/launcher/package.json`
 - `apps/backend/src/routes/launcher-releases.ts`
 - `docs/LAUNCHER_UPDATES.md`
+
+### CSS FPV drone
+
+- Source: `mods/css-fpv-drone/addons/sourcemod/scripting/rareteam_fpv_drone.sp`.
+- Command: `!fpv` / `sm_fpv`; WASD and mouse steer, Space/Ctrl change altitude, primary fire detonates and secondary fire cancels.
+- The drone has configurable speed, health, lifetime, cooldown, blast damage/radius and a global active limit.
+- Player bodies remain stationary and vulnerable. Drones are cleaned up on death, disconnect, round end, invalid entities and plugin unload.
+- Compiled successfully with SourceMod `spcomp64` 1.12.0.7255.
+- `.github/workflows/css-fpv-production.yml` compiles the plugin, uploads the SMX and CFG to Pterodactyl CSS server `2420d205`, restarts it and verifies that it returns to `running`.
+- Production installation is automated on changes under `mods/css-fpv-drone`; an in-game flight/damage test is still required.
+- Launcher and backend workflows now use path filters, so CSS-only changes no longer create unrelated launcher releases or backend deployments.
 
 ## 3. Pterodactyl inventory
 
@@ -257,7 +268,7 @@ Actual end-user verification still needed:
 
 Priority order:
 
-1. Test the first Survival Jim CSS v34 client launch on Windows using a clean base client directory.
+1. Install `rareteam_fpv_drone.smx` on Survival Jim CSS v34 and test flight, collision, damage, cleanup and round transitions.
 2. Keep CSS direct-connect compatible; only add optional SteamID-based roles/bans if needed later.
 3. Migrate Windows users from the extracted portable build to the NSIS installer once; later versions can auto-update.
 4. Sign/notarize macOS builds and Authenticode-sign Windows builds.
